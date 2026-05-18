@@ -2,29 +2,37 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useTopItems } from "@/lib/api/hooks/use-fnb";
+import type { FnBFilters } from "@/lib/api/mock/fnb";
 
-interface TopItem {
-  rank: number;
-  name: string;
-  category: string;
-  quantity: number;
-  revenue: number;
+interface TopItemsTableProps {
+  filters?: FnBFilters;
 }
 
-const topItems: TopItem[] = [
-  { rank: 1, name: "Arabic Breakfast Platter", category: "Breakfast", quantity: 42, revenue: 2520 },
-  { rank: 2, name: "Grilled Lamb Chops", category: "Main Course", quantity: 28, revenue: 2240 },
-  { rank: 3, name: "Fresh Orange Juice", category: "Beverages", quantity: 86, revenue: 1290 },
-  { rank: 4, name: "Club Sandwich", category: "All Day Dining", quantity: 35, revenue: 1225 },
-  { rank: 5, name: "Chicken Shawarma", category: "Main Course", quantity: 38, revenue: 1140 },
-  { rank: 6, name: "Arabic Coffee", category: "Beverages", quantity: 124, revenue: 992 },
-  { rank: 7, name: "Caesar Salad", category: "Starters", quantity: 31, revenue: 930 },
-  { rank: 8, name: "Hummus & Bread", category: "Starters", quantity: 52, revenue: 780 },
-  { rank: 9, name: "Kunafa", category: "Desserts", quantity: 28, revenue: 700 },
-  { rank: 10, name: "Mango Smoothie", category: "Beverages", quantity: 45, revenue: 675 },
-];
+export function TopItemsTable({ filters }: TopItemsTableProps) {
+  const { data: topItems, loading, error } = useTopItems(filters);
 
-export function TopItemsTable() {
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading top items..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !topItems) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load top items"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">
@@ -45,14 +53,14 @@ export function TopItemsTable() {
               </tr>
             </thead>
             <tbody>
-              {topItems.map((item) => (
+              {topItems.map((item, index) => (
                 <tr
-                  key={item.rank}
+                  key={item.name}
                   className="border-b border-muted/30 text-sm transition-colors hover:bg-muted/30"
                 >
                   <td className="px-4 py-2.5">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                      {item.rank}
+                      {index + 1}
                     </span>
                   </td>
                   <td className="px-4 py-2.5">

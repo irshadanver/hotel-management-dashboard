@@ -2,32 +2,53 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useChannelMix } from "@/lib/api/hooks/use-revenue";
+import type { RevenueFilters } from "@/lib/api/mock/revenue";
 
-const data = [
-  { name: "Booking.com", value: 32, color: "oklch(0.55 0.15 250)" },
-  { name: "Direct Website", value: 28, color: "oklch(0.65 0.15 145)" },
-  { name: "Expedia", value: 18, color: "oklch(0.55 0.12 280)" },
-  { name: "Corporate Portal", value: 14, color: "oklch(0.65 0.15 50)" },
-  { name: "GDS", value: 8, color: "oklch(0.65 0.12 165)" },
-];
+interface ChannelMixChartProps {
+  filters?: RevenueFilters;
+}
 
-export function ChannelMixChart() {
+export function ChannelMixChart({ filters }: ChannelMixChartProps) {
+  const { data, loading, error } = useChannelMix(filters);
+
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading channel mix..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load channel mix"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">Channel Mix</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-6">
-          <div className="h-[200px] w-[200px]">
+        <div className="flex flex-col items-center justify-center gap-4 xl:flex-row">
+          <div className="mx-auto h-[220px] w-full min-w-0 max-w-[240px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
+                  innerRadius={48}
+                  outerRadius={78}
                   paddingAngle={2}
                   dataKey="value"
                 >
@@ -47,7 +68,7 @@ export function ChannelMixChart() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex w-full min-w-0 flex-col gap-2">
             {data.map((item) => (
               <div key={item.name} className="flex items-center gap-2">
                 <div

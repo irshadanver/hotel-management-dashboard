@@ -18,6 +18,10 @@ function RoomsPageContent() {
   const highlightRoom = searchParams.get("room");
   const [selectedDate, setSelectedDate] = useState("today");
   const [selectedRoomType, setSelectedRoomType] = useState("all");
+  const roomFilters = {
+    date: selectedDate,
+    roomType: selectedRoomType,
+  };
 
   return (
     <DashboardShell
@@ -32,24 +36,25 @@ function RoomsPageContent() {
         onRoomTypeChange={setSelectedRoomType}
       />
 
-      <RoomsKPICards />
+      <RoomsKPICards filters={roomFilters} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <RoomStatusGrid
+            selectedDate={selectedDate}
             selectedRoomType={selectedRoomType}
             statusFilter={statusFilter}
             highlightRoom={highlightRoom}
           />
         </div>
         <div className="space-y-6">
-          <ArrivalsList />
-          <DeparturesList />
-          <VIPPanel />
+          <ArrivalsList filters={roomFilters} />
+          <DeparturesList filters={roomFilters} />
+          <VIPPanel filters={roomFilters} />
         </div>
       </div>
 
-      <RoomsOccupancyChart />
+      <RoomsOccupancyChart filters={roomFilters} />
     </DashboardShell>
   );
 }

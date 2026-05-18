@@ -36,7 +36,7 @@ export interface DashboardException {
 export const mockDashboardKPIs: DashboardKPI[] = [
   {
     title: "Occupancy %",
-    value: "78.5%",
+    value: "81.7%",
     change: 5.2,
     changeLabel: "vs last week",
     trend: "up",
@@ -57,7 +57,7 @@ export const mockDashboardKPIs: DashboardKPI[] = [
   },
   {
     title: "Today's Revenue",
-    value: "SAR 125,450",
+    value: "SAR 127,450",
     change: 12.8,
     changeLabel: "vs yesterday",
     trend: "up",
@@ -85,7 +85,7 @@ export const mockRevenueTrend: TimeSeriesDataPoint[] = [
   { date: "May 11", revenue: 128000 },
   { date: "May 12", revenue: 135000 },
   { date: "May 13", revenue: 122000 },
-  { date: "May 14", revenue: 125450 },
+  { date: "May 14", revenue: 127450 },
 ];
 
 export const mockOccupancyForecast: TimeSeriesDataPoint[] = [

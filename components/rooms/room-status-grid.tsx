@@ -53,18 +53,23 @@ const statusConfig: Record<
 };
 
 interface RoomStatusGridProps {
+  selectedDate: string;
   selectedRoomType: string;
   statusFilter?: string | null;
   highlightRoom?: string | null;
 }
 
 export function RoomStatusGrid({
+  selectedDate,
   selectedRoomType,
   statusFilter,
   highlightRoom,
 }: RoomStatusGridProps) {
   const router = useRouter();
-  const { data: rooms, loading, error } = useRoomStatus();
+  const { data: rooms, loading, error } = useRoomStatus({
+    date: selectedDate,
+    roomType: selectedRoomType,
+  });
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -96,12 +101,14 @@ export function RoomStatusGrid({
     );
   }
 
-  let filteredRooms =
+  const typeFilteredRooms =
     selectedRoomType === "all"
       ? rooms
       : rooms.filter(
           (r) => r.type.toLowerCase() === selectedRoomType.toLowerCase()
         );
+
+  let filteredRooms = typeFilteredRooms;
 
   if (statusFilter) {
     filteredRooms = filteredRooms.filter((r) => r.status === statusFilter);
@@ -116,7 +123,7 @@ export function RoomStatusGrid({
     {} as Record<number, Room[]>
   );
 
-  const statusCounts = filteredRooms.reduce(
+  const statusCounts = typeFilteredRooms.reduce(
     (acc, room) => {
       acc[room.status] = (acc[room.status] || 0) + 1;
       return acc;
@@ -139,7 +146,7 @@ export function RoomStatusGrid({
                 Room Status Grid
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                Click a room for details · click legend to filter
+                Click a room for details · click legend to filter · {filteredRooms.length} rooms shown
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">

@@ -13,6 +13,7 @@ import { useRoomsKPIs } from "@/lib/api/hooks/use-rooms";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { DrillDownCard } from "@/components/shared/drill-down-card";
 import { ROOMS_KPI_ROUTES } from "@/lib/drill-down/routes";
+import type { RoomFilters } from "@/lib/api/mock/rooms";
 
 interface RoomKPICardProps {
   title: string;
@@ -25,21 +26,25 @@ interface RoomKPICardProps {
 function RoomKPICard({ title, value, subtitle, icon, color }: RoomKPICardProps) {
   return (
     <Card className="h-full shadow-sm">
-      <CardContent className="flex h-full min-h-[116px] items-center gap-4 p-5">
-        <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-          style={{ backgroundColor: color }}
-        >
-          {icon}
-        </div>
-        <div className="min-w-0 space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-semibold tracking-tight text-foreground">
-            {value}
+      <CardContent className="flex h-full min-h-[132px] flex-col gap-2.5 p-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+            style={{ backgroundColor: color }}
+          >
+            {icon}
+          </div>
+          <p className="min-w-0 text-sm font-medium leading-snug text-muted-foreground">
+            {title}
           </p>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
-          )}
+        </div>
+
+        <p className="break-words text-2xl font-semibold tracking-tight text-foreground">
+          {value}
+        </p>
+
+        <div className="min-h-4 text-xs">
+          {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
         </div>
       </CardContent>
     </Card>
@@ -55,8 +60,12 @@ const kpiIcons: Record<string, React.ReactNode> = {
   "No-Shows": <XCircle className="h-6 w-6 text-white" />,
 };
 
-export function RoomsKPICards() {
-  const { data: kpis, loading, error } = useRoomsKPIs();
+interface RoomsKPICardsProps {
+  filters?: RoomFilters;
+}
+
+export function RoomsKPICards({ filters }: RoomsKPICardsProps) {
+  const { data: kpis, loading, error } = useRoomsKPIs(filters);
 
   if (loading) return <DataLoading />;
   if (error || !kpis) {

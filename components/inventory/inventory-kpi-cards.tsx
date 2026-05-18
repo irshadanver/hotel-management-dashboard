@@ -20,7 +20,7 @@ const kpis = [
   },
   {
     title: "Below Reorder Level",
-    value: "18",
+    value: "8",
     subtitle: "Items need ordering",
     icon: <AlertTriangle className="h-6 w-6 text-white" />,
     iconBgColor: "oklch(0.55 0.15 25)",

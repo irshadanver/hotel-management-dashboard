@@ -8,28 +8,36 @@ import {
   fetchRoomsOccupancyTrend,
   fetchVIPGuests,
 } from "../services/rooms";
+import type { RoomFilters } from "../mock/rooms";
 import { useApiQuery } from "./use-api-query";
 
-export function useRoomsKPIs() {
-  return useApiQuery(fetchRoomsKPIs);
+function roomFilterDeps(filters?: RoomFilters) {
+  return [filters?.date ?? "today", filters?.roomType ?? "all"];
 }
 
-export function useRoomStatus() {
-  return useApiQuery(fetchRoomStatus);
+export function useRoomsKPIs(filters?: RoomFilters) {
+  return useApiQuery(() => fetchRoomsKPIs(filters), roomFilterDeps(filters));
 }
 
-export function useRoomArrivals() {
-  return useApiQuery(fetchRoomArrivals);
+export function useRoomStatus(filters?: RoomFilters) {
+  return useApiQuery(() => fetchRoomStatus(filters), roomFilterDeps(filters));
 }
 
-export function useRoomDepartures() {
-  return useApiQuery(fetchRoomDepartures);
+export function useRoomArrivals(filters?: RoomFilters) {
+  return useApiQuery(() => fetchRoomArrivals(filters), roomFilterDeps(filters));
 }
 
-export function useVIPGuests() {
-  return useApiQuery(fetchVIPGuests);
+export function useRoomDepartures(filters?: RoomFilters) {
+  return useApiQuery(() => fetchRoomDepartures(filters), roomFilterDeps(filters));
 }
 
-export function useRoomsOccupancyTrend() {
-  return useApiQuery(fetchRoomsOccupancyTrend);
+export function useVIPGuests(filters?: RoomFilters) {
+  return useApiQuery(() => fetchVIPGuests(filters), roomFilterDeps(filters));
+}
+
+export function useRoomsOccupancyTrend(filters?: RoomFilters) {
+  return useApiQuery(
+    () => fetchRoomsOccupancyTrend(filters),
+    roomFilterDeps(filters)
+  );
 }

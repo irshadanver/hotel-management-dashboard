@@ -11,57 +11,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
-
-const lowDemandDates = [
-  {
-    date: "May 19, 2026",
-    dayOfWeek: "Tuesday",
-    occupancy: 42,
-    roomsAvailable: 104,
-    adr: 385,
-    severity: "critical",
-  },
-  {
-    date: "May 20, 2026",
-    dayOfWeek: "Wednesday",
-    occupancy: 48,
-    roomsAvailable: 94,
-    adr: 395,
-    severity: "critical",
-  },
-  {
-    date: "May 26, 2026",
-    dayOfWeek: "Tuesday",
-    occupancy: 52,
-    roomsAvailable: 86,
-    adr: 410,
-    severity: "warning",
-  },
-  {
-    date: "May 27, 2026",
-    dayOfWeek: "Wednesday",
-    occupancy: 55,
-    roomsAvailable: 81,
-    adr: 420,
-    severity: "warning",
-  },
-  {
-    date: "Jun 2, 2026",
-    dayOfWeek: "Tuesday",
-    occupancy: 58,
-    roomsAvailable: 76,
-    adr: 425,
-    severity: "warning",
-  },
-  {
-    date: "Jun 3, 2026",
-    dayOfWeek: "Wednesday",
-    occupancy: 60,
-    roomsAvailable: 72,
-    adr: 430,
-    severity: "low",
-  },
-];
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useLowDemand } from "@/lib/api/hooks/use-revenue";
+import type { RevenueFilters } from "@/lib/api/mock/revenue";
 
 function getSeverityBadge(severity: string) {
   switch (severity) {
@@ -89,7 +41,33 @@ function getSeverityBadge(severity: string) {
   }
 }
 
-export function LowDemandTable() {
+interface LowDemandTableProps {
+  filters?: RevenueFilters;
+}
+
+export function LowDemandTable({ filters }: LowDemandTableProps) {
+  const { data: lowDemandDates, loading, error } = useLowDemand(filters);
+
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading low-demand dates..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !lowDemandDates) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load low-demand dates"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">

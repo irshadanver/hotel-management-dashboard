@@ -1,18 +1,22 @@
 "use client";
 
 import {
-  ChartCard,
-  SimpleBarChart,
-  LegendItem,
-  chartColors,
-} from "@/components/shared";
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { ChartCard, LegendItem, chartColors } from "@/components/shared";
 
 const data = [
-  { department: "Rooms", revenue: 78500, budget: 72000 },
-  { department: "F&B", revenue: 32400, budget: 35000 },
+  { department: "Rooms", revenue: 86500, budget: 82000 },
+  { department: "F&B", revenue: 18450, budget: 20000 },
   { department: "Banquet", revenue: 12800, budget: 15000 },
   { department: "Spa", revenue: 8200, budget: 8500 },
-  { department: "Other", revenue: 5550, budget: 5000 },
+  { department: "Other", revenue: 1500, budget: 2000 },
 ];
 
 export function RevenueByDeptChart() {
@@ -30,18 +34,57 @@ export function RevenueByDeptChart() {
         </>
       }
     >
-      <SimpleBarChart
-        data={data}
-        xAxisKey="department"
-        layout="vertical"
-        valueFormatter={formatValue}
-        bars={[
-          { dataKey: "revenue", color: chartColors.success, name: "Actual" },
-          { dataKey: "budget", color: chartColors.muted, name: "Budget" },
-        ]}
-        height={280}
-        barSize={16}
-      />
+      <ResponsiveContainer width="100%" height={280}>
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 8, right: 24, left: 12, bottom: 8 }}
+          barCategoryGap={14}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+          <XAxis
+            type="number"
+            tickFormatter={formatValue}
+            tick={{ fontSize: 11, fill: "#6b7280" }}
+            axisLine={{ stroke: "#e5e7eb" }}
+            tickLine={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="department"
+            width={72}
+            tick={{ fontSize: 11, fill: "#6b7280" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            formatter={(value: number, name: string) => [
+              `SAR ${value.toLocaleString()}`,
+              name === "revenue" ? "Actual" : "Budget",
+            ]}
+            contentStyle={{
+              backgroundColor: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              fontSize: "12px",
+            }}
+          />
+          <Bar
+            dataKey="revenue"
+            fill={chartColors.success}
+            name="Actual"
+            radius={[0, 4, 4, 0]}
+            barSize={14}
+          />
+          <Bar
+            dataKey="budget"
+            fill={chartColors.muted}
+            name="Budget"
+            radius={[0, 4, 4, 0]}
+            barSize={14}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </ChartCard>
   );
 }

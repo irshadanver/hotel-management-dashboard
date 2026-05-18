@@ -9,40 +9,48 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useRoomsOccupancyTrend } from "@/lib/api/hooks/use-rooms";
+import type { RoomFilters } from "@/lib/api/mock/rooms";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
 
-const data = [
-  { date: "May 15", forecast: 82, confirmed: 78 },
-  { date: "May 16", forecast: 85, confirmed: 72 },
-  { date: "May 17", forecast: 88, confirmed: 65 },
-  { date: "May 18", forecast: 92, confirmed: 58 },
-  { date: "May 19", forecast: 90, confirmed: 45 },
-  { date: "May 20", forecast: 75, confirmed: 38 },
-  { date: "May 21", forecast: 70, confirmed: 32 },
-  { date: "May 22", forecast: 78, confirmed: 28 },
-  { date: "May 23", forecast: 82, confirmed: 22 },
-  { date: "May 24", forecast: 85, confirmed: 18 },
-  { date: "May 25", forecast: 90, confirmed: 15 },
-  { date: "May 26", forecast: 95, confirmed: 12 },
-  { date: "May 27", forecast: 88, confirmed: 8 },
-  { date: "May 28", forecast: 80, confirmed: 5 },
-];
+interface RoomsOccupancyChartProps {
+  filters?: RoomFilters;
+}
 
-export function RoomsOccupancyChart() {
+export function RoomsOccupancyChart({ filters }: RoomsOccupancyChartProps) {
+  const { data, loading, error } = useRoomsOccupancyTrend(filters);
+
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading occupancy trend..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load occupancy trend"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">
-            Occupancy Forecast (Next 14 Days)
+            Occupancy Trend
           </CardTitle>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="h-2 w-4 rounded-full bg-primary" />
-              <span className="text-xs text-muted-foreground">Forecast</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-4 rounded-full" style={{ backgroundColor: "oklch(0.65 0.15 145)" }} />
-              <span className="text-xs text-muted-foreground">Confirmed</span>
+              <span className="text-xs text-muted-foreground">Occupancy</span>
             </div>
           </div>
         </div>
@@ -74,27 +82,16 @@ export function RoomsOccupancyChart() {
                   borderRadius: "8px",
                   fontSize: "12px",
                 }}
-                formatter={(value: number, name: string) => [
-                  `${value}%`,
-                  name === "forecast" ? "Forecast" : "Confirmed",
-                ]}
+                formatter={(value: number) => [`${value}%`, "Occupancy"]}
               />
               <Line
                 type="monotone"
-                dataKey="forecast"
+                dataKey="occupancy"
                 stroke="oklch(0.55 0.15 250)"
                 strokeWidth={2}
                 dot={{ fill: "oklch(0.55 0.15 250)", strokeWidth: 0, r: 3 }}
                 activeDot={{ r: 5, fill: "oklch(0.55 0.15 250)" }}
                 strokeDasharray="5 5"
-              />
-              <Line
-                type="monotone"
-                dataKey="confirmed"
-                stroke="oklch(0.65 0.15 145)"
-                strokeWidth={2}
-                dot={{ fill: "oklch(0.65 0.15 145)", strokeWidth: 0, r: 3 }}
-                activeDot={{ r: 5, fill: "oklch(0.65 0.15 145)" }}
               />
             </LineChart>
           </ResponsiveContainer>

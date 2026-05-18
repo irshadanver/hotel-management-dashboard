@@ -3,73 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Star } from "lucide-react";
-
-interface Arrival {
-  id: string;
-  guestName: string;
-  roomNumber: string;
-  roomType: string;
-  eta: string;
-  status: "expected" | "checked-in" | "delayed";
-  isVIP: boolean;
-}
-
-const arrivals: Arrival[] = [
-  {
-    id: "1",
-    guestName: "Ahmed Al-Rashid",
-    roomNumber: "501",
-    roomType: "Executive Suite",
-    eta: "14:00",
-    status: "expected",
-    isVIP: true,
-  },
-  {
-    id: "2",
-    guestName: "Sarah Johnson",
-    roomNumber: "305",
-    roomType: "Deluxe",
-    eta: "15:30",
-    status: "expected",
-    isVIP: false,
-  },
-  {
-    id: "3",
-    guestName: "Mohammed Khalil",
-    roomNumber: "202",
-    roomType: "Standard",
-    eta: "12:00",
-    status: "checked-in",
-    isVIP: false,
-  },
-  {
-    id: "4",
-    guestName: "Emily Chen",
-    roomNumber: "410",
-    roomType: "Deluxe",
-    eta: "16:00",
-    status: "expected",
-    isVIP: true,
-  },
-  {
-    id: "5",
-    guestName: "Omar Farooq",
-    roomNumber: "108",
-    roomType: "Standard",
-    eta: "11:00",
-    status: "delayed",
-    isVIP: false,
-  },
-  {
-    id: "6",
-    guestName: "Lisa Thompson",
-    roomNumber: "303",
-    roomType: "Deluxe",
-    eta: "17:00",
-    status: "expected",
-    isVIP: false,
-  },
-];
+import { useRoomArrivals } from "@/lib/api/hooks/use-rooms";
+import type { RoomFilters } from "@/lib/api/mock/rooms";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
 
 const statusStyles = {
   expected: "bg-amber-100 text-amber-700",
@@ -77,7 +13,33 @@ const statusStyles = {
   delayed: "bg-red-100 text-red-700",
 };
 
-export function ArrivalsList() {
+interface ArrivalsListProps {
+  filters?: RoomFilters;
+}
+
+export function ArrivalsList({ filters }: ArrivalsListProps) {
+  const { data: arrivals, loading, error } = useRoomArrivals(filters);
+
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading arrivals..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !arrivals) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load arrivals"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">

@@ -10,56 +10,58 @@ import {
 import { KPICard, KPICardsGrid } from "@/components/shared";
 import { DrillDownCard } from "@/components/shared/drill-down-card";
 import { FNB_KPI_ROUTES } from "@/lib/drill-down/routes";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useFnBKPIs } from "@/lib/api/hooks/use-fnb";
+import type { FnBFilters } from "@/lib/api/mock/fnb";
 
-const kpis = [
-  {
-    title: "Today's Sales",
-    value: "SAR 18,450",
-    subtitle: "All outlets",
+const kpiVisuals = {
+  "Today's Sales": {
     icon: <DollarSign className="h-6 w-6 text-white" />,
     iconBgColor: "oklch(0.55 0.12 250)",
-    trend: { value: "+8.2%", positive: true },
   },
-  {
-    title: "Covers",
-    value: "284",
-    subtitle: "Guests served today",
+  Covers: {
     icon: <Users className="h-6 w-6 text-white" />,
     iconBgColor: "oklch(0.60 0.12 165)",
-    trend: { value: "+12%", positive: true },
   },
-  {
-    title: "Average Check",
-    value: "SAR 65",
-    subtitle: "Per cover",
+  "Average Check": {
     icon: <Receipt className="h-6 w-6 text-white" />,
     iconBgColor: "oklch(0.55 0.10 280)",
-    trend: { value: "+3.5%", positive: true },
   },
-  {
-    title: "Discounts",
-    value: "SAR 1,240",
-    subtitle: "6.7% of sales",
+  Discounts: {
     icon: <Percent className="h-6 w-6 text-white" />,
     iconBgColor: "oklch(0.65 0.15 55)",
-    trend: { value: "+1.2%", positive: false },
   },
-  {
-    title: "Voids",
-    value: "SAR 320",
-    subtitle: "8 transactions",
+  Voids: {
     icon: <XCircle className="h-6 w-6 text-white" />,
     iconBgColor: "oklch(0.55 0.15 25)",
-    trend: { value: "+2", positive: false },
   },
-];
+};
 
-export function FnBKPICards() {
+interface FnBKPICardsProps {
+  filters?: FnBFilters;
+}
+
+export function FnBKPICards({ filters }: FnBKPICardsProps) {
+  const { data: kpis, loading, error } = useFnBKPIs(filters);
+
+  if (loading) return <DataLoading label="Loading F&B KPIs..." />;
+  if (error || !kpis) {
+    return <DataError message={error?.message ?? "Failed to load F&B KPIs"} />;
+  }
+
   return (
     <KPICardsGrid columns={5}>
       {kpis.map((kpi) => {
         const href = FNB_KPI_ROUTES[kpi.title];
-        const card = <KPICard key={kpi.title} {...kpi} className="h-full" />;
+        const visual = kpiVisuals[kpi.title as keyof typeof kpiVisuals];
+        const card = (
+          <KPICard
+            key={kpi.title}
+            {...kpi}
+            {...visual}
+            className="h-full"
+          />
+        );
 
         return href ? (
           <DrillDownCard

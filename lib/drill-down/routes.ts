@@ -10,7 +10,7 @@ export function drillDownHref(
 }
 
 export const DASHBOARD_KPI_ROUTES: Record<string, string> = {
-  "Occupancy %": drillDownHref("rooms", "occupied"),
+  "Occupancy %": drillDownHref("rooms", "occupancy"),
   ADR: drillDownHref("revenue", "adr"),
   RevPAR: drillDownHref("revenue", "revpar"),
   "Today's Revenue": drillDownHref("revenue", "today"),
@@ -64,6 +64,20 @@ export const EXCEPTION_ROUTES: Record<string, string> = {
   "Negative Stock": drillDownHref("inventory", "negative-stock"),
   "Overdue Receivables": drillDownHref("finance", "overdue-receivables"),
   "Room Maintenance": drillDownHref("rooms", "maintenance"),
+};
+
+export const ALERT_ROUTES: Record<string, string> = {
+  "High Discount": drillDownHref("revenue", "high-discounts"),
+  "Pending Balance": drillDownHref("finance", "unsettled-folios"),
+  "Negative Stock": drillDownHref("inventory", "negative-stock"),
+  "PO Pending Approval": drillDownHref("inventory", "pending-pos"),
+  "Overdue Receivable": drillDownHref("finance", "overdue-receivables"),
+  "Room Maintenance": drillDownHref("rooms", "maintenance"),
+  "Open Check": drillDownHref("fnb", "open-checks"),
+  "Price Variance": drillDownHref("inventory", "price-variance"),
+  "VIP Arrival": drillDownHref("rooms", "arrivals"),
+  "Daily Report": drillDownHref("finance", "cash-position"),
+  "Inventory Count": drillDownHref("inventory", "stock-value"),
 };
 
 export function roomDetailHref(roomNumber: string) {

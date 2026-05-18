@@ -15,6 +15,10 @@ import { StaffMealsPanel } from "@/components/fnb/staff-meals-panel";
 export default function FnBPage() {
   const [selectedDate, setSelectedDate] = useState("today");
   const [selectedOutlet, setSelectedOutlet] = useState("all");
+  const fnbFilters = {
+    date: selectedDate,
+    outlet: selectedOutlet,
+  };
 
   return (
     <DashboardShell
@@ -29,20 +33,20 @@ export default function FnBPage() {
         onOutletChange={setSelectedOutlet}
       />
 
-      <FnBKPICards />
+      <FnBKPICards filters={fnbFilters} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <OutletSalesChart />
-        <MealPeriodChart />
+        <OutletSalesChart filters={fnbFilters} />
+        <MealPeriodChart filters={fnbFilters} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <TopItemsTable />
-        <SlowItemsTable />
-        <OpenChecksPanel />
+        <TopItemsTable filters={fnbFilters} />
+        <SlowItemsTable filters={fnbFilters} />
+        <OpenChecksPanel filters={fnbFilters} />
       </div>
 
-      <StaffMealsPanel />
+      <StaffMealsPanel filters={fnbFilters} />
     </DashboardShell>
   );
 }

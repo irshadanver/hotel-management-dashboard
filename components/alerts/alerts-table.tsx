@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CheckCircle, Filter } from "lucide-react";
+import { ALERT_ROUTES } from "@/lib/drill-down/routes";
 
 type Severity = "critical" | "warning" | "info";
 type Status = "open" | "resolved";
@@ -289,12 +290,19 @@ export function AlertsTable({
             <tbody className="text-sm">
               {filteredAlerts.map((alert) => {
                 const config = severityConfig[alert.severity];
+                const drillDownHref = ALERT_ROUTES[alert.type];
                 return (
                   <tr
                     key={alert.id}
+                    onClick={() => {
+                      if (drillDownHref) window.location.href = drillDownHref;
+                    }}
                     className={`border-b transition-colors hover:bg-muted/50 ${
+                      drillDownHref ? "cursor-pointer" : ""
+                    } ${
                       alert.status === "resolved" ? "opacity-60" : ""
                     }`}
+                    title={drillDownHref ? "Click row to view details" : undefined}
                   >
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-2">
@@ -338,22 +346,27 @@ export function AlertsTable({
                       </Badge>
                     </td>
                     <td className="py-3">
-                      {alert.status === "open" ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleResolve(alert.id)}
-                          className="h-8 gap-1.5 text-xs"
-                        >
-                          <CheckCircle className="h-3.5 w-3.5" />
-                          Resolve
-                        </Button>
-                      ) : (
-                        <span className="flex items-center gap-1 text-xs text-green-600">
-                          <CheckCircle className="h-3.5 w-3.5" />
-                          Done
-                        </span>
-                      )}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {alert.status === "open" ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleResolve(alert.id);
+                            }}
+                            className="h-8 gap-1.5 text-xs"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Resolve
+                          </Button>
+                        ) : (
+                          <span className="flex items-center gap-1 text-xs text-green-600">
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Done
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

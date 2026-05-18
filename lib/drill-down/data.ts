@@ -37,6 +37,13 @@ const roomColumns: DrillDownColumn[] = [
   { key: "guest", header: "Guest" },
 ];
 
+const roomSummaryColumns: DrillDownColumn[] = [
+  { key: "segment", header: "Segment" },
+  { key: "rooms", header: "Rooms", align: "right" },
+  { key: "basis", header: "Basis" },
+  { key: "status", header: "Status" },
+];
+
 const guestColumns: DrillDownColumn[] = [
   { key: "guest", header: "Guest" },
   { key: "room", header: "Room" },
@@ -85,6 +92,31 @@ function roomRows(status?: string) {
       guest: room.guest ?? "-",
     }));
 }
+
+const roomAvailableRows = [
+  { segment: "Standard", rooms: 14, basis: "Vacant clean inventory", status: "Ready to sell" },
+  { segment: "Deluxe", rooms: 12, basis: "Vacant clean inventory", status: "Ready to sell" },
+  { segment: "Executive", rooms: 8, basis: "Vacant clean inventory", status: "Ready to sell" },
+  { segment: "Suite", rooms: 8, basis: "Vacant clean inventory", status: "Ready to sell" },
+];
+
+const roomSoldRows = [
+  { segment: "Standard", rooms: 52, basis: "Confirmed occupied/sold rooms", status: "Sold" },
+  { segment: "Deluxe", rooms: 44, basis: "Confirmed occupied/sold rooms", status: "Sold" },
+  { segment: "Executive", rooms: 26, basis: "Confirmed occupied/sold rooms", status: "Sold" },
+  { segment: "Suite", rooms: 16, basis: "Confirmed occupied/sold rooms", status: "Sold" },
+];
+
+const roomArrivalSummaryRows = [
+  { segment: "Expected", rooms: 23, basis: "Today's arrivals", status: "Pending check-in" },
+  { segment: "Checked In", rooms: 5, basis: "Today's arrivals", status: "Completed" },
+];
+
+const roomDepartureSummaryRows = [
+  { segment: "Checked Out", rooms: 18, basis: "Today's departures", status: "Completed" },
+  { segment: "Due Out", rooms: 4, basis: "Today's departures", status: "Pending" },
+  { segment: "Extended", rooms: 2, basis: "Today's departures", status: "Extended stay" },
+];
 
 function dashboardArrivalRows() {
   return mockDashboardArrivals.map((arrival) => ({
@@ -168,6 +200,83 @@ const highDiscountRows = [
     source: "Group booking - Weekend package",
   },
 ];
+
+const revenueTodayRows = [
+  {
+    date: "May 14",
+    metric: "Rooms",
+    amount: "SAR 86,500",
+    source: "PMS posted room revenue",
+  },
+  {
+    date: "May 14",
+    metric: "F&B",
+    amount: "SAR 18,450",
+    source: "POS posted outlet revenue",
+  },
+  {
+    date: "May 14",
+    metric: "Spa & Other",
+    amount: "SAR 22,500",
+    source: "Ancillary posted revenue",
+  },
+];
+
+const revenueMtdRows = [
+  {
+    date: "May MTD",
+    metric: "Rooms",
+    amount: "SAR 1,245,600",
+    source: "PMS posted room revenue",
+  },
+  {
+    date: "May MTD",
+    metric: "F&B",
+    amount: "SAR 372,900",
+    source: "POS posted outlet revenue",
+  },
+  {
+    date: "May MTD",
+    metric: "Banquet",
+    amount: "SAR 151,200",
+    source: "Events posted revenue",
+  },
+  {
+    date: "May MTD",
+    metric: "Spa & Other",
+    amount: "SAR 86,500",
+    source: "Ancillary posted revenue",
+  },
+];
+
+const roomRevenueForecastRows = [
+  {
+    date: "Next 7 days",
+    metric: "Room Revenue Forecast",
+    amount: "SAR 560,000",
+    source: "Revenue forecast model",
+  },
+  {
+    date: "Days 8-14",
+    metric: "Room Revenue Forecast",
+    amount: "SAR 590,000",
+    source: "Revenue forecast model",
+  },
+  {
+    date: "Days 15-21",
+    metric: "Room Revenue Forecast",
+    amount: "SAR 610,000",
+    source: "Revenue forecast model",
+  },
+  {
+    date: "Days 22-30",
+    metric: "Room Revenue Forecast",
+    amount: "SAR 640,000",
+    source: "Revenue forecast model",
+  },
+];
+
+const adrForecastValues = [470, 475, 480, 485, 490, 495, 500];
 
 const financeRows = {
   "cash-position": [
@@ -260,42 +369,54 @@ const financeRows = {
   ],
   "accounts-receivable": [
     {
-      account: "Global Industries",
-      type: "Corporate Invoice",
-      amount: "SAR 125,000",
-      status: "Overdue",
+      account: "Current AR",
+      type: "Aging Bucket",
+      amount: "SAR 124,500",
+      status: "18 invoices",
     },
     {
-      account: "Al Noor Travel",
-      type: "Travel Agent",
-      amount: "SAR 78,500",
-      status: "Open",
+      account: "1-30 Days",
+      type: "Aging Bucket",
+      amount: "SAR 89,200",
+      status: "12 invoices",
     },
     {
-      account: "Riyadh Events",
-      type: "Banquet Invoice",
-      amount: "SAR 121,280",
-      status: "Open",
+      account: "31-60 Days",
+      type: "Aging Bucket",
+      amount: "SAR 52,400",
+      status: "7 invoices",
+    },
+    {
+      account: "61-90 Days",
+      type: "Aging Bucket",
+      amount: "SAR 34,800",
+      status: "4 invoices",
+    },
+    {
+      account: "90+ Days",
+      type: "Aging Bucket",
+      amount: "SAR 23,880",
+      status: "3 invoices",
     },
   ],
   "accounts-payable": [
     {
-      account: "Fresh Foods Co.",
-      type: "Vendor Bill",
-      amount: "SAR 42,800",
-      status: "Due this week",
+      account: "Due in 7 Days",
+      type: "Payables Bucket",
+      amount: "SAR 63,420",
+      status: "7 invoices",
     },
     {
-      account: "Linen Supply",
-      type: "Vendor Bill",
-      amount: "SAR 38,600",
-      status: "Pending approval",
+      account: "Due in 15 Days",
+      type: "Payables Bucket",
+      amount: "SAR 34,380",
+      status: "6 invoices",
     },
     {
-      account: "Utility Provider",
-      type: "Utility Bill",
-      amount: "SAR 75,520",
-      status: "Scheduled",
+      account: "Due in 30 Days",
+      type: "Payables Bucket",
+      amount: "SAR 59,120",
+      status: "6 invoices",
     },
   ],
 };
@@ -321,6 +442,20 @@ const inventoryRows = {
       store: "Housekeeping Store",
       stock: -18,
       reorderLevel: 120,
+      status: "Negative stock",
+    },
+    {
+      item: "Shampoo Amenities",
+      store: "Housekeeping Store",
+      stock: -9,
+      reorderLevel: 80,
+      status: "Negative stock",
+    },
+    {
+      item: "Still Water 500ml",
+      store: "Mini-bar",
+      stock: -12,
+      reorderLevel: 100,
       status: "Negative stock",
     },
   ],
@@ -349,69 +484,111 @@ const inventoryRows = {
   ],
   "below-reorder": [
     {
-      item: "Coffee Beans",
-      store: "Main Kitchen",
-      stock: 8,
-      reorderLevel: 25,
-      status: "Below reorder",
+      item: "Olive Oil - Extra Virgin",
+      store: "F&B - Kitchen",
+      stock: "3 L",
+      reorderLevel: "10 L",
+      status: "Critical",
     },
     {
-      item: "Bath Amenities",
+      item: "Chicken Breast",
+      store: "F&B - Kitchen",
+      stock: "8 kg",
+      reorderLevel: "25 kg",
+      status: "Critical",
+    },
+    {
+      item: "Bathroom Amenities Set",
       store: "Housekeeping",
-      stock: 42,
-      reorderLevel: 120,
-      status: "Below reorder",
+      stock: "45 sets",
+      reorderLevel: "100 sets",
+      status: "Critical",
     },
     {
-      item: "Mineral Water",
-      store: "Mini-bar",
-      stock: 30,
-      reorderLevel: 80,
-      status: "Below reorder",
+      item: "Printer Paper A4",
+      store: "Admin",
+      stock: "5 reams",
+      reorderLevel: "15 reams",
+      status: "Critical",
+    },
+    {
+      item: "Fresh Salmon",
+      store: "F&B - Kitchen",
+      stock: "4 kg",
+      reorderLevel: "12 kg",
+      status: "Critical",
+    },
+    {
+      item: "Cleaning Chemicals",
+      store: "Housekeeping",
+      stock: "12 L",
+      reorderLevel: "20 L",
+      status: "Low",
+    },
+    {
+      item: "Bed Linens - King",
+      store: "Housekeeping",
+      stock: "18 sets",
+      reorderLevel: "30 sets",
+      status: "Low",
+    },
+    {
+      item: "Coffee Beans - Arabic",
+      store: "F&B - Beverage",
+      stock: "8 kg",
+      reorderLevel: "15 kg",
+      status: "Low",
     },
   ],
   "pending-pos": [
     {
-      item: "PO-2024-0156",
+      item: "Finance Approval",
       store: "Purchasing",
-      stock: "SAR 12,500",
-      reorderLevel: "-",
+      stock: 3,
+      reorderLevel: "SAR 18,500",
       status: "Awaiting Finance",
     },
     {
-      item: "PO-2024-0182",
+      item: "GM Approval",
       store: "Purchasing",
-      stock: "SAR 8,700",
-      reorderLevel: "-",
+      stock: 2,
+      reorderLevel: "SAR 11,700",
       status: "Awaiting GM",
     },
     {
-      item: "PO-2024-0191",
+      item: "Vendor Confirmation",
       store: "Purchasing",
-      stock: "SAR 21,600",
-      reorderLevel: "-",
+      stock: 2,
+      reorderLevel: "SAR 12,600",
       status: "Pending approval",
     },
   ],
   "price-variance": [
     {
-      item: "Salmon Fillet",
+      item: "Seafood",
       store: "Main Kitchen",
-      stock: "+15%",
+      stock: 1,
       reorderLevel: "10%",
       status: "Above threshold",
     },
     {
-      item: "Olive Oil",
+      item: "Imported Grocery",
       store: "Main Kitchen",
-      stock: "+12%",
+      stock: 1,
       reorderLevel: "10%",
       status: "Above threshold",
     },
     {
-      item: "Laundry Chemicals",
+      item: "Housekeeping Chemicals",
       store: "Housekeeping",
-      stock: "+11%",
+      stock: 1,
+      reorderLevel: "10%",
+      status: "Above threshold",
+    },
+    {
+      item: "Guest Amenities",
+      store: "Housekeeping",
+      stock: 1,
       reorderLevel: "10%",
       status: "Above threshold",
     },
@@ -519,6 +696,26 @@ const fnbRows = {
       status: "Guest cancellation",
     },
   ],
+  "open-checks": [
+    {
+      outlet: "All Day Dining",
+      metric: "Open Checks",
+      value: "SAR 650",
+      status: "2 checks over 60 minutes",
+    },
+    {
+      outlet: "Lobby Cafe",
+      metric: "Open Checks",
+      value: "SAR 95",
+      status: "1 active check",
+    },
+    {
+      outlet: "Room Service",
+      metric: "Open Checks",
+      value: "SAR 340",
+      status: "1 check over 60 minutes",
+    },
+  ],
 };
 
 export function getDrillDownDataset(
@@ -532,11 +729,11 @@ export function getDrillDownDataset(
         domain,
         view,
         title: "Occupied Rooms",
-        subtitle: "Rooms currently sold/occupied from the rooms status dataset.",
-        source: "lib/api/mock/rooms.ts -> mockRooms",
+        subtitle: "Rooms sold summary reconciled to the Rooms Sold KPI (138).",
+        source: "Rooms sales summary mock dataset",
         apiRequired: "GET /api/rooms/status?status=occupied",
-        columns: roomColumns,
-        rows: roomRows("occupied"),
+        columns: roomSummaryColumns,
+        rows: roomSoldRows,
       };
     }
 
@@ -545,11 +742,11 @@ export function getDrillDownDataset(
         domain,
         view,
         title: "Available Rooms",
-        subtitle: "Vacant clean rooms ready to sell.",
-        source: "lib/api/mock/rooms.ts -> mockRooms",
+        subtitle: "Available rooms summary reconciled to the Rooms Available KPI (42).",
+        source: "Rooms availability summary mock dataset",
         apiRequired: "GET /api/rooms/status?status=vacant-clean",
-        columns: roomColumns,
-        rows: roomRows("vacant-clean"),
+        columns: roomSummaryColumns,
+        rows: roomAvailableRows,
       };
     }
 
@@ -572,10 +769,10 @@ export function getDrillDownDataset(
         view,
         title: "Rooms Arrivals Today",
         subtitle: "Front-office arrivals dataset, not alerts or finance data.",
-        source: "lib/api/mock/rooms.ts -> mockRoomArrivals",
+        source: "Rooms arrivals summary mock dataset",
         apiRequired: "GET /api/rooms/arrivals",
-        columns: guestColumns,
-        rows: roomArrivalRows(),
+        columns: roomSummaryColumns,
+        rows: roomArrivalSummaryRows,
       };
     }
 
@@ -585,10 +782,10 @@ export function getDrillDownDataset(
         view,
         title: "Rooms Departures Today",
         subtitle: "Front-office departure dataset with balances.",
-        source: "lib/api/mock/rooms.ts -> mockRoomDepartures",
+        source: "Rooms departures summary mock dataset",
         apiRequired: "GET /api/rooms/departures",
-        columns: guestColumns,
-        rows: roomDepartureRows(),
+        columns: roomSummaryColumns,
+        rows: roomDepartureSummaryRows,
       };
     }
 
@@ -620,11 +817,11 @@ export function getDrillDownDataset(
       };
     }
 
-    if (view === "occupancy" || view === "occupancy-forecast") {
+    if (view === "occupancy") {
       return {
         domain,
         view,
-        title: view === "occupancy" ? "Rooms Occupancy" : "Occupancy Forecast",
+        title: "Rooms Occupancy",
         subtitle: "Occupancy data from the rooms/occupancy dataset.",
         source: "lib/api/mock/rooms.ts -> mockRoomsOccupancyTrend",
         apiRequired: "GET /api/rooms/occupancy-trend",
@@ -637,6 +834,27 @@ export function getDrillDownDataset(
           date: String(point.date),
           occupancy: `${point.occupancy}%`,
           source: params?.date ? `Selected point: ${params.date}` : "Rooms forecast",
+        })),
+      };
+    }
+
+    if (view === "occupancy-forecast") {
+      return {
+        domain,
+        view,
+        title: "Rooms Occupancy Forecast",
+        subtitle: "Forecast data shown on the executive dashboard occupancy chart.",
+        source: "lib/api/mock/dashboard.ts -> mockOccupancyForecast",
+        apiRequired: "GET /api/rooms/occupancy-forecast",
+        columns: [
+          { key: "date", header: "Date" },
+          { key: "occupancy", header: "Forecast", align: "right" },
+          { key: "source", header: "Source" },
+        ],
+        rows: mockOccupancyForecast.map((point) => ({
+          date: String(point.date),
+          occupancy: `${point.forecast}%`,
+          source: params?.date ? `Selected point: ${params.date}` : "Executive forecast",
         })),
       };
     }
@@ -677,7 +895,7 @@ export function getDrillDownDataset(
         columns: revenueColumns,
         rows: revenueRows("ADR Forecast").map((row, index) => ({
           ...row,
-          amount: `SAR ${[485, 492, 501, 478, 515, 530, 505][index] ?? 485}`,
+          amount: `SAR ${adrForecastValues[index] ?? 485}`,
           source: "Revenue forecast model",
         })),
       };
@@ -692,7 +910,7 @@ export function getDrillDownDataset(
         source: "Revenue forecast dataset",
         apiRequired: "GET /api/revenue/room-revenue-forecast",
         columns: revenueColumns,
-        rows: revenueRows("Room Revenue Forecast"),
+        rows: roomRevenueForecastRows,
       };
     }
 
@@ -770,6 +988,32 @@ export function getDrillDownDataset(
     }
 
     const date = params?.date ?? undefined;
+    if (!date && view === "mtd") {
+      return {
+        domain,
+        view,
+        title: "Month-to-Date Revenue",
+        subtitle: "Posted revenue records reconciled to the dashboard MTD KPI.",
+        source: "Revenue MTD summary mock dataset",
+        apiRequired: "GET /api/revenue?period=mtd",
+        columns: revenueColumns,
+        rows: revenueMtdRows,
+      };
+    }
+
+    if (!date && (!view || view === "today")) {
+      return {
+        domain,
+        view: view ?? "today",
+        title: "Today's Revenue",
+        subtitle: "Posted revenue records reconciled to the dashboard and finance KPIs.",
+        source: "Revenue daily summary mock dataset",
+        apiRequired: "GET /api/revenue?date=today",
+        columns: revenueColumns,
+        rows: revenueTodayRows,
+      };
+    }
+
     return {
       domain,
       view: view ?? "today",
@@ -794,6 +1038,7 @@ export function getDrillDownDataset(
       "average-check": "F&B Average Check",
       discounts: "F&B Discounts",
       voids: "F&B Voids",
+      "open-checks": "F&B Open Checks",
     };
 
     return {

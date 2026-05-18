@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -9,60 +10,100 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Building2 } from "lucide-react";
+import { ArrowDownUp, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useTopAccounts } from "@/lib/api/hooks/use-revenue";
+import type { RevenueFilters, TopAccountRow } from "@/lib/api/mock/revenue";
 
-const accounts = [
-  {
-    company: "Saudi Aramco",
-    nights: 245,
-    revenue: 142500,
-    adr: 582,
-  },
-  {
-    company: "SABIC Corporation",
-    nights: 198,
-    revenue: 108900,
-    adr: 550,
-  },
-  {
-    company: "Saudi Telecom",
-    nights: 156,
-    revenue: 85800,
-    adr: 550,
-  },
-  {
-    company: "National Water Co",
-    nights: 134,
-    revenue: 67000,
-    adr: 500,
-  },
-  {
-    company: "Riyadh Bank",
-    nights: 112,
-    revenue: 56000,
-    adr: 500,
-  },
-  {
-    company: "Al Rajhi Capital",
-    nights: 98,
-    revenue: 49000,
-    adr: 500,
-  },
-  {
-    company: "ACWA Power",
-    nights: 87,
-    revenue: 43500,
-    adr: 500,
-  },
-  {
-    company: "Maaden Mining",
-    nights: 76,
-    revenue: 38000,
-    adr: 500,
-  },
-];
+type SortKey = keyof Pick<TopAccountRow, "company" | "nights" | "revenue" | "adr">;
+type SortDirection = "asc" | "desc";
 
-export function TopAccountsTable() {
+interface TopAccountsTableProps {
+  filters?: RevenueFilters;
+}
+
+function SortHeader({
+  label,
+  sortKey,
+  activeKey,
+  direction,
+  onSort,
+  align = "center",
+}: {
+  label: string;
+  sortKey: SortKey;
+  activeKey: SortKey;
+  direction: SortDirection;
+  onSort: (key: SortKey) => void;
+  align?: "left" | "center";
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      onClick={() => onSort(sortKey)}
+      className={`grid h-auto w-full grid-cols-[1fr_12px_30px] items-center gap-1 px-0 py-0 text-xs font-medium ${
+        align === "left" ? "text-left" : "mx-auto text-center"
+      }`}
+    >
+      <span className="truncate">{label}</span>
+      <ArrowDownUp className="h-3 w-3" />
+      <span className="text-[10px] leading-none">
+        {activeKey === sortKey ? (direction === "asc" ? "ASC" : "DESC") : ""}
+      </span>
+    </Button>
+  );
+}
+
+export function TopAccountsTable({ filters }: TopAccountsTableProps) {
+  const { data: accounts, loading, error } = useTopAccounts(filters);
+  const [sortKey, setSortKey] = useState<SortKey>("revenue");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  const sortedAccounts = useMemo(() => {
+    if (!accounts) return [];
+    return [...accounts].sort((a, b) => {
+      const first = a[sortKey];
+      const second = b[sortKey];
+      const result =
+        typeof first === "string"
+          ? first.localeCompare(String(second))
+          : Number(first) - Number(second);
+      return sortDirection === "asc" ? result : -result;
+    });
+  }, [accounts, sortDirection, sortKey]);
+
+  const handleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortKey(key);
+    setSortDirection(key === "company" ? "asc" : "desc");
+  };
+
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading corporate accounts..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !accounts) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load corporate accounts"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">
@@ -74,23 +115,50 @@ export function TopAccountsTable() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs font-medium">Company</TableHead>
-              <TableHead className="text-right text-xs font-medium">
-                Nights
+              <TableHead className="w-[48%]">
+                <SortHeader
+                  label="Company"
+                  sortKey="company"
+                  activeKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                  align="left"
+                />
               </TableHead>
-              <TableHead className="text-right text-xs font-medium">
-                Revenue
+              <TableHead className="w-[16%] text-center text-xs font-medium">
+                <SortHeader
+                  label="Nights"
+                  sortKey="nights"
+                  activeKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
               </TableHead>
-              <TableHead className="text-right text-xs font-medium">
-                ADR
+              <TableHead className="w-[20%] text-center text-xs font-medium">
+                <SortHeader
+                  label="Revenue"
+                  sortKey="revenue"
+                  activeKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+              </TableHead>
+              <TableHead className="w-[16%] text-center text-xs font-medium">
+                <SortHeader
+                  label="ADR"
+                  sortKey="adr"
+                  activeKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {accounts.map((account, index) => (
+            {sortedAccounts.map((account, index) => (
               <TableRow key={account.company}>
                 <TableCell className="py-2.5">
                   <div className="flex items-center gap-2">
@@ -102,13 +170,13 @@ export function TopAccountsTable() {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="py-2.5 text-right text-sm">
+                <TableCell className="py-2.5 text-center text-sm">
                   {account.nights}
                 </TableCell>
-                <TableCell className="py-2.5 text-right text-sm font-medium">
+                <TableCell className="py-2.5 text-center text-sm font-medium">
                   SAR {account.revenue.toLocaleString()}
                 </TableCell>
-                <TableCell className="py-2.5 text-right text-sm text-muted-foreground">
+                <TableCell className="py-2.5 text-center text-sm text-muted-foreground">
                   {account.adr}
                 </TableCell>
               </TableRow>

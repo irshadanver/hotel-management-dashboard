@@ -62,20 +62,20 @@ export function DeparturesTable() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-hidden">
+            <table className="w-full table-fixed">
               <thead>
                 <tr className="border-b">
-                  <th className="pb-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="w-[35%] pb-3 pr-2 text-left text-xs font-medium text-muted-foreground">
                     Guest Name
                   </th>
-                  <th className="pb-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="w-[17%] px-2 pb-3 text-left text-xs font-medium text-muted-foreground">
                     Room
                   </th>
-                  <th className="pb-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="w-[21%] px-2 pb-3 text-left text-xs font-medium text-muted-foreground">
                     Balance
                   </th>
-                  <th className="pb-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="w-[27%] pb-3 pl-2 text-left text-xs font-medium text-muted-foreground">
                     Status
                   </th>
                 </tr>
@@ -111,13 +111,13 @@ export function DeparturesTable() {
                       }}
                       className="cursor-pointer border-b last:border-0 hover:bg-muted/50"
                     >
-                      <td className="py-3 text-sm font-medium">
-                        {departure.guestName}
+                      <td className="py-3 pr-2 text-sm font-medium">
+                        <span className="block truncate">{departure.guestName}</span>
                       </td>
-                      <td className="py-3 text-sm text-muted-foreground">
+                      <td className="px-2 py-3 text-sm text-muted-foreground">
                         {departure.room}
                       </td>
-                      <td className="py-3 text-sm">
+                      <td className="px-2 py-3 text-sm">
                         <span
                           className={
                             departure.balance > 0
@@ -128,8 +128,10 @@ export function DeparturesTable() {
                           SAR {departure.balance.toLocaleString()}
                         </span>
                       </td>
-                      <td className="py-3">
-                        <Badge variant={config.variant}>{config.label}</Badge>
+                      <td className="py-3 pl-2">
+                        <Badge variant={config.variant} className="whitespace-nowrap text-[11px]">
+                          {config.label}
+                        </Badge>
                       </td>
                     </tr>
                   );

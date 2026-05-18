@@ -33,7 +33,7 @@ export function PanelCard({
   className,
 }: PanelCardProps) {
   return (
-    <Card className={cn("shadow-sm", className)}>
+    <Card className={cn("flex min-h-0 flex-col shadow-sm", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -55,8 +55,8 @@ export function PanelCard({
           {action}
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <ScrollArea style={{ maxHeight }}>
+      <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
+        <ScrollArea className="h-full" style={{ maxHeight }}>
           <div className="px-4 pb-4">{children}</div>
         </ScrollArea>
       </CardContent>

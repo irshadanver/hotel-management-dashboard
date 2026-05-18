@@ -151,8 +151,8 @@ export function PendingPOsPanel() {
           </Badge>
         )
       }
-      maxHeight="480px"
-      className="h-full"
+      maxHeight="900px"
+      className="h-[900px] overflow-hidden"
     >
       <div className="space-y-3">
         {pendingOrders.map((po) => (

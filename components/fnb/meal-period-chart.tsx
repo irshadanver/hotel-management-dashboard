@@ -11,26 +11,37 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useMealPeriods } from "@/lib/api/hooks/use-fnb";
+import type { FnBFilters } from "@/lib/api/mock/fnb";
 
-const data = [
-  { period: "6 AM", breakfast: 450, lunch: 0, dinner: 0 },
-  { period: "7 AM", breakfast: 1200, lunch: 0, dinner: 0 },
-  { period: "8 AM", breakfast: 2100, lunch: 0, dinner: 0 },
-  { period: "9 AM", breakfast: 1800, lunch: 0, dinner: 0 },
-  { period: "10 AM", breakfast: 650, lunch: 0, dinner: 0 },
-  { period: "11 AM", breakfast: 0, lunch: 320, dinner: 0 },
-  { period: "12 PM", breakfast: 0, lunch: 2400, dinner: 0 },
-  { period: "1 PM", breakfast: 0, lunch: 3200, dinner: 0 },
-  { period: "2 PM", breakfast: 0, lunch: 1800, dinner: 0 },
-  { period: "3 PM", breakfast: 0, lunch: 450, dinner: 0 },
-  { period: "6 PM", breakfast: 0, lunch: 0, dinner: 1200 },
-  { period: "7 PM", breakfast: 0, lunch: 0, dinner: 2800 },
-  { period: "8 PM", breakfast: 0, lunch: 0, dinner: 3500 },
-  { period: "9 PM", breakfast: 0, lunch: 0, dinner: 2200 },
-  { period: "10 PM", breakfast: 0, lunch: 0, dinner: 850 },
-];
+interface MealPeriodChartProps {
+  filters?: FnBFilters;
+}
 
-export function MealPeriodChart() {
+export function MealPeriodChart({ filters }: MealPeriodChartProps) {
+  const { data, loading, error } = useMealPeriods(filters);
+
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading meal periods..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load meal periods"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">

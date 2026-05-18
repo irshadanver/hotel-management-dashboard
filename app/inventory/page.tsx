@@ -19,7 +19,7 @@ export default function InventoryPage() {
     >
       <InventoryKPICards />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid items-start gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <div className="grid gap-6 md:grid-cols-2">
             <ReorderAlertsTable />
@@ -31,7 +31,7 @@ export default function InventoryPage() {
           </div>
           <SlowMovingTable />
         </div>
-        <div className="lg:col-span-1">
+        <div className="min-h-0 lg:col-span-1">
           <PendingPOsPanel />
         </div>
       </div>

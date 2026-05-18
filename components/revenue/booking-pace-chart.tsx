@@ -6,30 +6,27 @@ import {
   LegendItem,
   chartColors,
 } from "@/components/shared";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useBookingPace } from "@/lib/api/hooks/use-revenue";
+import type { RevenueFilters } from "@/lib/api/mock/revenue";
 
-const data = [
-  { date: "May 1", current: 125, lastYear: 118 },
-  { date: "May 2", current: 142, lastYear: 125 },
-  { date: "May 3", current: 168, lastYear: 135 },
-  { date: "May 4", current: 195, lastYear: 148 },
-  { date: "May 5", current: 228, lastYear: 162 },
-  { date: "May 6", current: 265, lastYear: 175 },
-  { date: "May 7", current: 298, lastYear: 192 },
-  { date: "May 8", current: 335, lastYear: 210 },
-  { date: "May 9", current: 372, lastYear: 228 },
-  { date: "May 10", current: 405, lastYear: 245 },
-  { date: "May 11", current: 438, lastYear: 262 },
-  { date: "May 12", current: 468, lastYear: 278 },
-  { date: "May 13", current: 495, lastYear: 295 },
-  { date: "May 14", current: 520, lastYear: 312 },
-];
+interface BookingPaceChartProps {
+  filters?: RevenueFilters;
+}
 
-export function BookingPaceChart() {
+export function BookingPaceChart({ filters }: BookingPaceChartProps) {
+  const { data, loading, error } = useBookingPace(filters);
   const formatValue = (value: number) => `${value} nights`;
+  const days = filters?.range?.replace("d", "") ?? "30";
+
+  if (loading) return <DataLoading label="Loading booking pace..." />;
+  if (error || !data) {
+    return <DataError message={error?.message ?? "Failed to load booking pace"} />;
+  }
 
   return (
     <ChartCard
-      title="Booking Pace (Last 14 Days)"
+      title={`Booking Pace (Next ${days} Days)`}
       legend={
         <>
           <LegendItem color={chartColors.primary} label="Current Period" />

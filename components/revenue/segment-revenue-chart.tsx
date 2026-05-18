@@ -9,15 +9,37 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useSegmentRevenue } from "@/lib/api/hooks/use-revenue";
+import type { RevenueFilters } from "@/lib/api/mock/revenue";
 
-const data = [
-  { segment: "Corporate", revenue: 485000, color: "oklch(0.55 0.15 250)" },
-  { segment: "OTA", revenue: 320000, color: "oklch(0.65 0.15 145)" },
-  { segment: "Direct", revenue: 275000, color: "oklch(0.55 0.12 280)" },
-  { segment: "Group", revenue: 180000, color: "oklch(0.65 0.15 50)" },
-];
+interface SegmentRevenueChartProps {
+  filters?: RevenueFilters;
+}
 
-export function SegmentRevenueChart() {
+export function SegmentRevenueChart({ filters }: SegmentRevenueChartProps) {
+  const { data, loading, error } = useSegmentRevenue(filters);
+
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading segment revenue..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load segment revenue"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">

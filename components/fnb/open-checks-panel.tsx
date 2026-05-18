@@ -3,25 +3,36 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, AlertCircle } from "lucide-react";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useOpenChecks } from "@/lib/api/hooks/use-fnb";
+import type { FnBFilters } from "@/lib/api/mock/fnb";
 
-interface OpenCheck {
-  checkNumber: string;
-  table: string;
-  server: string;
-  amount: number;
-  openTime: string;
-  duration: number;
+interface OpenChecksPanelProps {
+  filters?: FnBFilters;
 }
 
-const openChecks: OpenCheck[] = [
-  { checkNumber: "CHK-4521", table: "Table 12", server: "Ahmed K.", amount: 485, openTime: "12:30 PM", duration: 95 },
-  { checkNumber: "CHK-4518", table: "Pool Bar 3", server: "Sara M.", amount: 220, openTime: "1:15 PM", duration: 50 },
-  { checkNumber: "CHK-4523", table: "Table 8", server: "Mohammed R.", amount: 165, openTime: "1:45 PM", duration: 20 },
-  { checkNumber: "CHK-4520", table: "Room 412", server: "Fatima A.", amount: 340, openTime: "12:45 PM", duration: 80 },
-  { checkNumber: "CHK-4525", table: "Table 5", server: "Ahmed K.", amount: 95, openTime: "2:00 PM", duration: 5 },
-];
+export function OpenChecksPanel({ filters }: OpenChecksPanelProps) {
+  const { data: openChecks, loading, error } = useOpenChecks(filters);
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading open checks..." />
+        </CardContent>
+      </Card>
+    );
+  }
 
-export function OpenChecksPanel() {
+  if (error || !openChecks) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load open checks"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   const totalOpen = openChecks.reduce((sum, check) => sum + check.amount, 0);
 
   return (

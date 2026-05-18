@@ -11,16 +11,37 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useOutletSales } from "@/lib/api/hooks/use-fnb";
+import type { FnBFilters } from "@/lib/api/mock/fnb";
 
-const data = [
-  { outlet: "Main Restaurant", sales: 8450, color: "oklch(0.55 0.12 250)" },
-  { outlet: "Lobby Cafe", sales: 4200, color: "oklch(0.60 0.12 165)" },
-  { outlet: "Room Service", sales: 3100, color: "oklch(0.55 0.10 280)" },
-  { outlet: "Pool Bar", sales: 1800, color: "oklch(0.65 0.15 55)" },
-  { outlet: "Banquet", sales: 900, color: "oklch(0.55 0.12 200)" },
-];
+interface OutletSalesChartProps {
+  filters?: FnBFilters;
+}
 
-export function OutletSalesChart() {
+export function OutletSalesChart({ filters }: OutletSalesChartProps) {
+  const { data, loading, error } = useOutletSales(filters);
+
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading outlet sales..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load outlet sales"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">

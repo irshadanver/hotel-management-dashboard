@@ -3,50 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Gift, AlertCircle, Cake } from "lucide-react";
-
-interface VIPGuest {
-  id: string;
-  guestName: string;
-  roomNumber: string;
-  status: "in-house" | "arriving";
-  specialRequests: string[];
-  tier: "gold" | "platinum" | "diamond";
-}
-
-const vipGuests: VIPGuest[] = [
-  {
-    id: "1",
-    guestName: "Ahmed Al-Rashid",
-    roomNumber: "501",
-    status: "arriving",
-    specialRequests: ["Late checkout", "Extra pillows", "Halal meals only"],
-    tier: "diamond",
-  },
-  {
-    id: "2",
-    guestName: "Emily Chen",
-    roomNumber: "410",
-    status: "arriving",
-    specialRequests: ["Birthday celebration", "Room upgrade if available"],
-    tier: "platinum",
-  },
-  {
-    id: "3",
-    guestName: "Robert Martinez",
-    roomNumber: "502",
-    status: "in-house",
-    specialRequests: ["Airport transfer", "Newspaper delivery"],
-    tier: "gold",
-  },
-  {
-    id: "4",
-    guestName: "Nadia Al-Fayed",
-    roomNumber: "505",
-    status: "in-house",
-    specialRequests: ["Allergy: Nuts", "Quiet room preferred"],
-    tier: "diamond",
-  },
-];
+import { useVIPGuests } from "@/lib/api/hooks/use-rooms";
+import type { RoomFilters } from "@/lib/api/mock/rooms";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
 
 const tierStyles = {
   gold: "bg-amber-100 text-amber-700",
@@ -65,7 +24,33 @@ function getRequestIcon(request: string) {
   return <Gift className="h-3 w-3" />;
 }
 
-export function VIPPanel() {
+interface VIPPanelProps {
+  filters?: RoomFilters;
+}
+
+export function VIPPanel({ filters }: VIPPanelProps) {
+  const { data: vipGuests, loading, error } = useVIPGuests(filters);
+
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading VIP guests..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !vipGuests) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load VIP guests"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">
@@ -89,7 +74,7 @@ export function VIPPanel() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-700">
-                      {guest.guestName
+                      {guest.name
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
@@ -97,7 +82,7 @@ export function VIPPanel() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">
-                          {guest.guestName}
+                          {guest.name}
                         </span>
                         <Badge
                           className={`${tierStyles[guest.tier]} border-0 text-[10px] font-medium uppercase`}
@@ -110,12 +95,12 @@ export function VIPPanel() {
                         <span>·</span>
                         <span
                           className={
-                            guest.status === "arriving"
+                            guest.checkIn === "May 14"
                               ? "text-amber-600"
                               : "text-emerald-600"
                           }
                         >
-                          {guest.status === "arriving"
+                          {guest.checkIn === "May 14"
                             ? "Arriving"
                             : "In-House"}
                         </span>
@@ -124,7 +109,7 @@ export function VIPPanel() {
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5 pl-12">
-                  {guest.specialRequests.map((request, idx) => (
+                  {guest.preferences.split(", ").map((request, idx) => (
                     <span
                       key={idx}
                       className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"

@@ -3,26 +3,37 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Gift, Users } from "lucide-react";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useMealEntries } from "@/lib/api/hooks/use-fnb";
+import type { FnBFilters } from "@/lib/api/mock/fnb";
 
-interface MealEntry {
-  type: "complimentary" | "staff";
-  description: string;
-  outlet: string;
-  amount: number;
-  authorizedBy?: string;
-  reason?: string;
+interface StaffMealsPanelProps {
+  filters?: FnBFilters;
 }
 
-const mealEntries: MealEntry[] = [
-  { type: "complimentary", description: "VIP Guest - Suite 801", outlet: "Main Restaurant", amount: 450, authorizedBy: "GM", reason: "Guest complaint resolution" },
-  { type: "complimentary", description: "Wedding Anniversary", outlet: "Main Restaurant", amount: 180, authorizedBy: "F&B Manager", reason: "Dessert & champagne" },
-  { type: "staff", description: "Kitchen Staff (12)", outlet: "Staff Cafeteria", amount: 360, reason: "Lunch" },
-  { type: "staff", description: "Front Office (8)", outlet: "Staff Cafeteria", amount: 240, reason: "Lunch" },
-  { type: "complimentary", description: "Media Influencer", outlet: "Lobby Cafe", amount: 85, authorizedBy: "Marketing", reason: "PR hosting" },
-  { type: "staff", description: "Housekeeping (15)", outlet: "Staff Cafeteria", amount: 450, reason: "Lunch" },
-];
+export function StaffMealsPanel({ filters }: StaffMealsPanelProps) {
+  const { data: mealEntries, loading, error } = useMealEntries(filters);
 
-export function StaffMealsPanel() {
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataLoading label="Loading meal entries..." />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !mealEntries) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent>
+          <DataError message={error?.message ?? "Failed to load meal entries"} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   const complimentary = mealEntries.filter((e) => e.type === "complimentary");
   const staff = mealEntries.filter((e) => e.type === "staff");
   const totalComp = complimentary.reduce((sum, e) => sum + e.amount, 0);

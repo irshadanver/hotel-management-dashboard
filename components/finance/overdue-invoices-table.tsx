@@ -43,7 +43,7 @@ export function OverdueInvoicesTable() {
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="max-h-[280px] overflow-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-background">
               <tr className="border-b bg-muted/30">

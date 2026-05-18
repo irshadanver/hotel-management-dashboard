@@ -14,6 +14,10 @@ import { LowDemandTable } from "@/components/revenue/low-demand-table";
 export default function RevenueDashboard() {
   const [selectedRange, setSelectedRange] = useState("30d");
   const [selectedSegment, setSelectedSegment] = useState("all");
+  const revenueFilters = {
+    range: selectedRange,
+    segment: selectedSegment,
+  };
 
   return (
     <DashboardShell
@@ -28,21 +32,21 @@ export default function RevenueDashboard() {
         onSegmentChange={setSelectedSegment}
       />
 
-      <RevenueKPICards />
+      <RevenueKPICards filters={revenueFilters} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <BookingPaceChart />
-        <SegmentRevenueChart />
+        <BookingPaceChart filters={revenueFilters} />
+        <SegmentRevenueChart filters={revenueFilters} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <ChannelMixChart />
+        <ChannelMixChart filters={revenueFilters} />
         <div className="lg:col-span-2">
-          <LowDemandTable />
+          <LowDemandTable filters={revenueFilters} />
         </div>
       </div>
 
-      <TopAccountsTable />
+      <TopAccountsTable filters={revenueFilters} />
     </DashboardShell>
   );
 }

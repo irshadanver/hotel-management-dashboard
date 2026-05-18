@@ -30,40 +30,42 @@ export function KPICard({
 }: KPICardProps) {
   return (
     <Card className={cn("h-full shadow-sm", className)}>
-      <CardContent className="flex h-full min-h-[116px] items-center gap-4 p-5">
-        <div
-          className={cn(
-            "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-            alert && "ring-2 ring-red-500 ring-offset-2"
-          )}
-          style={{ backgroundColor: iconBgColor }}
-        >
-          {icon}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-semibold tracking-tight text-foreground">
-              {value}
-            </p>
-            {trend && (
-              <span
-                className={cn(
-                  "flex items-center text-xs font-medium",
-                  trend.positive ? "text-emerald-600" : "text-red-600"
-                )}
-              >
-                {trend.positive ? (
-                  <ArrowUpRight className="h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="h-3 w-3" />
-                )}
-                {trend.value}
-              </span>
+      <CardContent className="flex h-full min-h-[132px] flex-col justify-between gap-3 p-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className={cn(
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+              alert && "ring-2 ring-red-500 ring-offset-2"
             )}
+            style={{ backgroundColor: iconBgColor }}
+          >
+            {icon}
           </div>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
+          <p className="min-w-0 text-sm font-medium leading-snug text-muted-foreground">
+            {title}
+          </p>
+        </div>
+
+        <p className="break-words text-2xl font-semibold tracking-tight text-foreground">
+          {value}
+        </p>
+
+        <div className="flex min-h-4 flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+          {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+          {trend && (
+            <span
+              className={cn(
+                "flex items-center font-medium",
+                trend.positive ? "text-emerald-600" : "text-red-600"
+              )}
+            >
+              {trend.positive ? (
+                <ArrowUpRight className="h-3 w-3" />
+              ) : (
+                <ArrowDownRight className="h-3 w-3" />
+              )}
+              {trend.value}
+            </span>
           )}
         </div>
       </CardContent>

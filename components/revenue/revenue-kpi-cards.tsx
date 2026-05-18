@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import { DrillDownCard } from "@/components/shared/drill-down-card";
 import { REVENUE_KPI_ROUTES } from "@/lib/drill-down/routes";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useRevenueKPIs } from "@/lib/api/hooks/use-revenue";
+import type { RevenueFilters } from "@/lib/api/mock/revenue";
 
 interface RevenueKPICardProps {
   title: string;
@@ -33,32 +36,34 @@ function RevenueKPICard({
 }: RevenueKPICardProps) {
   return (
     <Card className="h-full shadow-sm">
-      <CardContent className="flex h-full min-h-[116px] items-center gap-4 p-5">
-        <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-          style={{ backgroundColor: color }}
-        >
-          {icon}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-semibold tracking-tight text-foreground">
-              {value}
-            </p>
-            {trend && (
-              <span
-                className={`text-xs font-medium ${
-                  trend.positive ? "text-emerald-600" : "text-red-600"
-                }`}
-              >
-                {trend.positive ? "+" : ""}
-                {trend.value}
-              </span>
-            )}
+      <CardContent className="flex h-full min-h-[132px] flex-col justify-between gap-3 p-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+            style={{ backgroundColor: color }}
+          >
+            {icon}
           </div>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
+          <p className="min-w-0 text-sm font-medium leading-snug text-muted-foreground">
+            {title}
+          </p>
+        </div>
+
+        <p className="break-words text-2xl font-semibold tracking-tight text-foreground">
+          {value}
+        </p>
+
+        <div className="flex min-h-4 flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+          {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+          {trend && (
+            <span
+              className={`font-medium ${
+                trend.positive ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              {trend.positive ? "+" : ""}
+              {trend.value}
+            </span>
           )}
         </div>
       </CardContent>
@@ -66,55 +71,47 @@ function RevenueKPICard({
   );
 }
 
-export function RevenueKPICards() {
-  const kpis: RevenueKPICardProps[] = [
-    {
-      title: "Occupancy Forecast",
-      value: "78.5%",
-      subtitle: "Next 30 days",
-      icon: <Percent className="h-6 w-6 text-white" />,
-      color: "oklch(0.55 0.15 250)",
-      trend: { value: "2.3%", positive: true },
-    },
-    {
-      title: "ADR Forecast",
-      value: "SAR 485",
-      subtitle: "Next 30 days",
-      icon: <DollarSign className="h-6 w-6 text-white" />,
-      color: "oklch(0.65 0.15 145)",
-      trend: { value: "3.1%", positive: true },
-    },
-    {
-      title: "Room Revenue Forecast",
-      value: "SAR 2.4M",
-      subtitle: "Next 30 days",
-      icon: <TrendingUp className="h-6 w-6 text-white" />,
-      color: "oklch(0.55 0.12 280)",
-      trend: { value: "5.8%", positive: true },
-    },
-    {
-      title: "Pickup (Last 7 Days)",
-      value: "342",
-      subtitle: "Room nights booked",
-      icon: <Calendar className="h-6 w-6 text-white" />,
-      color: "oklch(0.65 0.12 165)",
-      trend: { value: "12%", positive: true },
-    },
-    {
-      title: "Pickup (Today)",
-      value: "58",
-      subtitle: "Room nights booked",
-      icon: <CalendarCheck className="h-6 w-6 text-white" />,
-      color: "oklch(0.65 0.15 50)",
-      trend: { value: "8%", positive: true },
-    },
-  ];
+const kpiVisuals: Record<string, Pick<RevenueKPICardProps, "icon" | "color">> = {
+  "Occupancy Forecast": {
+    icon: <Percent className="h-6 w-6 text-white" />,
+    color: "oklch(0.55 0.15 250)",
+  },
+  "ADR Forecast": {
+    icon: <DollarSign className="h-6 w-6 text-white" />,
+    color: "oklch(0.65 0.15 145)",
+  },
+  "Room Revenue Forecast": {
+    icon: <TrendingUp className="h-6 w-6 text-white" />,
+    color: "oklch(0.55 0.12 280)",
+  },
+  "Pickup (Last 7 Days)": {
+    icon: <Calendar className="h-6 w-6 text-white" />,
+    color: "oklch(0.65 0.12 165)",
+  },
+  "Pickup (Today)": {
+    icon: <CalendarCheck className="h-6 w-6 text-white" />,
+    color: "oklch(0.65 0.15 50)",
+  },
+};
+
+interface RevenueKPICardsProps {
+  filters?: RevenueFilters;
+}
+
+export function RevenueKPICards({ filters }: RevenueKPICardsProps) {
+  const { data: kpis, loading, error } = useRevenueKPIs(filters);
+
+  if (loading) return <DataLoading label="Loading revenue KPIs..." />;
+  if (error || !kpis) {
+    return <DataError message={error?.message ?? "Failed to load revenue KPIs"} />;
+  }
 
   return (
     <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {kpis.map((kpi) => {
         const href = REVENUE_KPI_ROUTES[kpi.title];
-        const card = <RevenueKPICard key={kpi.title} {...kpi} />;
+        const visual = kpiVisuals[kpi.title] ?? kpiVisuals["Room Revenue Forecast"];
+        const card = <RevenueKPICard key={kpi.title} {...kpi} {...visual} />;
 
         return href ? (
           <DrillDownCard
