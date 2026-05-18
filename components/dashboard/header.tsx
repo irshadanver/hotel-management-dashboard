@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bell, Calendar, ChevronDown, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,12 +12,54 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  clearSession,
+  getStoredSession,
+  type HotelUserSession,
+} from "@/lib/auth/session";
+import { searchMockData } from "@/lib/search/mock-search";
 
 interface HeaderProps {
   sidebarCollapsed?: boolean;
 }
 
 export function Header({ sidebarCollapsed = false }: HeaderProps) {
+  const [session, setSession] = useState<HotelUserSession | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setSession(getStoredSession());
+  }, []);
+
+  const searchResults = useMemo(
+    () => searchMockData(searchQuery),
+    [searchQuery]
+  );
+
+  const signOut = () => {
+    clearSession();
+    router.replace("/login");
+  };
+
+  const openResult = (href: string) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    router.push(href);
+  };
+
+  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && searchResults[0]) {
+      event.preventDefault();
+      openResult(searchResults[0].href);
+    }
+
+    if (event.key === "Escape") {
+      setSearchOpen(false);
+    }
+  };
+
   return (
     <header
       className={`fixed top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card px-6 transition-all duration-300 ${
@@ -25,17 +70,68 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
       <div className="flex items-center gap-6">
         <div>
           <h1 className="text-lg font-semibold text-foreground">
-            Al Madinah Grand Hotel
+            {session?.propertyName ?? "Al Madinah Grand Hotel"}
           </h1>
-          <p className="text-xs text-muted-foreground">Riyadh, Saudi Arabia</p>
+          <p className="text-xs text-muted-foreground">
+            Chain {session?.chainId ?? "KSA"} · Property{" "}
+            {session?.propertyId ?? "MADINAH"}
+          </p>
         </div>
-        <div className="hidden items-center gap-2 rounded-lg border border-input bg-secondary/50 px-3 py-2 lg:flex">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-48 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-          />
+        <div className="relative hidden lg:block">
+          <div className="flex items-center gap-2 rounded-lg border border-input bg-secondary/50 px-3 py-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(event) => {
+                setSearchQuery(event.target.value);
+                setSearchOpen(true);
+              }}
+              onFocus={() => setSearchOpen(true)}
+              onKeyDown={handleSearchKeyDown}
+              placeholder="Search rooms, guests, alerts..."
+              className="w-64 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+          {searchOpen && searchQuery.trim().length >= 2 && (
+            <div className="absolute left-0 top-11 z-50 w-[26rem] overflow-hidden rounded-lg border bg-popover shadow-lg">
+              <div className="border-b px-3 py-2 text-xs text-muted-foreground">
+                Search results
+              </div>
+              {searchResults.length > 0 ? (
+                <div className="max-h-80 overflow-y-auto py-1">
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.id}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => openResult(result.href)}
+                      className="flex w-full items-start gap-3 px-3 py-2 text-left hover:bg-muted"
+                    >
+                      <span className="mt-0.5 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                        {result.module}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">
+                          {result.title}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {result.subtitle}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                  No matches found
+                </div>
+              )}
+              <div className="border-t px-3 py-2 text-[11px] text-muted-foreground">
+                Press Enter to open the first result. API_REQUIRED: GET /api/search.
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -76,17 +172,25 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
                 <User className="h-4 w-4 text-primary-foreground" />
               </div>
               <div className="hidden text-left md:block">
-                <p className="text-sm font-medium">Ahmed Hassan</p>
-                <p className="text-xs text-muted-foreground">General Manager</p>
+                <p className="text-sm font-medium">
+                  {session?.name ?? "Hotel User"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {session?.role ?? "General Manager"}
+                </p>
               </div>
               <ChevronDown className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem>Profile Settings</DropdownMenuItem>
-            <DropdownMenuItem>Preferences</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/profile">Profile Settings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/preferences">Preferences</Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Sign Out</DropdownMenuItem>
+            <DropdownMenuItem onClick={signOut}>Sign Out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

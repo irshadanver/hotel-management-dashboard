@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useOccupancyForecast } from "@/lib/api/hooks/use-dashboard";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { occupancyForecastHref } from "@/lib/drill-down/routes";
 
 export function OccupancyChart() {
   const router = useRouter();
@@ -53,7 +54,12 @@ export function OccupancyChart() {
             <LineChart
               data={data as { date: string; forecast: number }[]}
               className="cursor-pointer"
-              onClick={() => router.push("/rooms")}
+              onClick={(state) => {
+                const payload = state?.activePayload?.[0]?.payload as
+                  | { date: string }
+                  | undefined;
+                router.push(occupancyForecastHref(payload?.date));
+              }}
             >
               <XAxis
                 dataKey="date"

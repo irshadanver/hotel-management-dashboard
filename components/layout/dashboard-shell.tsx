@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { cn } from "@/lib/utils";
+import { getStoredSession } from "@/lib/auth/session";
 
 export type NavItemId =
   | "dashboard"
@@ -32,6 +34,26 @@ export function DashboardShell({
   headerActions,
 }: DashboardShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (getStoredSession()) {
+      setAuthorized(true);
+      return;
+    }
+
+    router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+  }, [pathname, router]);
+
+  if (!authorized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        Checking session...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

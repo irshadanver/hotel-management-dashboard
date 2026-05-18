@@ -23,7 +23,7 @@ export function DrillDownCard({
       href={href}
       aria-label={ariaLabel}
       className={cn(
-        "group relative block rounded-xl transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "group relative block rounded-xl transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&>*]:h-full",
         className
       )}
     >

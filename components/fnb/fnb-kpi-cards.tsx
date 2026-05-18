@@ -8,6 +8,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { KPICard, KPICardsGrid } from "@/components/shared";
+import { DrillDownCard } from "@/components/shared/drill-down-card";
+import { FNB_KPI_ROUTES } from "@/lib/drill-down/routes";
 
 const kpis = [
   {
@@ -55,9 +57,23 @@ const kpis = [
 export function FnBKPICards() {
   return (
     <KPICardsGrid columns={5}>
-      {kpis.map((kpi) => (
-        <KPICard key={kpi.title} {...kpi} />
-      ))}
+      {kpis.map((kpi) => {
+        const href = FNB_KPI_ROUTES[kpi.title];
+        const card = <KPICard key={kpi.title} {...kpi} className="h-full" />;
+
+        return href ? (
+          <DrillDownCard
+            key={kpi.title}
+            href={href}
+            ariaLabel={`Drill down: ${kpi.title}`}
+            className="h-full"
+          >
+            {card}
+          </DrillDownCard>
+        ) : (
+          card
+        );
+      })}
     </KPICardsGrid>
   );
 }

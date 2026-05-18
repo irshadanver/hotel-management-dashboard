@@ -29,8 +29,8 @@ export function KPICard({
   className,
 }: KPICardProps) {
   return (
-    <Card className={cn("shadow-sm", className)}>
-      <CardContent className="flex items-center gap-4 p-5">
+    <Card className={cn("h-full shadow-sm", className)}>
+      <CardContent className="flex h-full min-h-[116px] items-center gap-4 p-5">
         <div
           className={cn(
             "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
@@ -91,7 +91,7 @@ export function KPICardsGrid({
   };
 
   return (
-    <div className={cn("grid gap-4", gridCols[columns], className)}>
+    <div className={cn("grid auto-rows-fr gap-4", gridCols[columns], className)}>
       {children}
     </div>
   );

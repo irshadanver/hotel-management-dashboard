@@ -147,13 +147,16 @@ export function RoomStatusGrid({
                 <button
                   key={status}
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    const scrollY = window.scrollY;
                     router.push(
                       statusFilter === status
                         ? "/rooms"
-                        : `/rooms?status=${status}`
-                    )
-                  }
+                        : `/rooms?status=${status}`,
+                      { scroll: false }
+                    );
+                    window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                  }}
                   className={cn(
                     "flex items-center gap-2 rounded-full border px-2 py-1 transition-colors hover:bg-muted",
                     statusFilter === status && "border-primary bg-primary/5"

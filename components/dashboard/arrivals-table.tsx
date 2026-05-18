@@ -19,6 +19,7 @@ export function ArrivalsTable() {
   const [guestOpen, setGuestOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<{
     guestName: string;
+    room?: string;
     roomType: string;
     eta: string;
     status: string;
@@ -91,6 +92,7 @@ export function ArrivalsTable() {
                       onClick={() => {
                         setSelectedGuest({
                           guestName: arrival.guestName,
+                          room: arrival.room,
                           roomType: arrival.roomType,
                           eta: arrival.eta,
                           status: config.label,
@@ -102,6 +104,7 @@ export function ArrivalsTable() {
                           e.preventDefault();
                           setSelectedGuest({
                             guestName: arrival.guestName,
+                            room: arrival.room,
                             roomType: arrival.roomType,
                             eta: arrival.eta,
                             status: config.label,

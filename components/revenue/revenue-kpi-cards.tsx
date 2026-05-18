@@ -8,6 +8,8 @@ import {
   Calendar,
   CalendarCheck,
 } from "lucide-react";
+import { DrillDownCard } from "@/components/shared/drill-down-card";
+import { REVENUE_KPI_ROUTES } from "@/lib/drill-down/routes";
 
 interface RevenueKPICardProps {
   title: string;
@@ -30,8 +32,8 @@ function RevenueKPICard({
   trend,
 }: RevenueKPICardProps) {
   return (
-    <Card className="shadow-sm">
-      <CardContent className="flex items-center gap-4 p-5">
+    <Card className="h-full shadow-sm">
+      <CardContent className="flex h-full min-h-[116px] items-center gap-4 p-5">
         <div
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
           style={{ backgroundColor: color }}
@@ -109,10 +111,24 @@ export function RevenueKPICards() {
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-      {kpis.map((kpi) => (
-        <RevenueKPICard key={kpi.title} {...kpi} />
-      ))}
+    <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      {kpis.map((kpi) => {
+        const href = REVENUE_KPI_ROUTES[kpi.title];
+        const card = <RevenueKPICard key={kpi.title} {...kpi} />;
+
+        return href ? (
+          <DrillDownCard
+            key={kpi.title}
+            href={href}
+            ariaLabel={`Drill down: ${kpi.title}`}
+            className="h-full"
+          >
+            {card}
+          </DrillDownCard>
+        ) : (
+          card
+        );
+      })}
     </div>
   );
 }

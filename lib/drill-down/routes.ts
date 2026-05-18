@@ -1,30 +1,69 @@
-/** Drill-down targets: KPI / exception → page + query (API_REQUIRED: same filters on backend) */
+/** Drill-down targets: KPI / exception -> relevant dataset view */
+
+export function drillDownHref(
+  domain: string,
+  view: string,
+  params?: Record<string, string>
+) {
+  const searchParams = new URLSearchParams({ domain, view, ...params });
+  return `/drilldown?${searchParams.toString()}`;
+}
 
 export const DASHBOARD_KPI_ROUTES: Record<string, string> = {
-  "Occupancy %": "/rooms?status=occupied",
-  ADR: "/revenue?metric=adr",
-  RevPAR: "/revenue?metric=revpar",
-  "Today's Revenue": "/revenue?range=today",
-  "MTD Revenue": "/revenue?range=mtd",
-  "Cash Position": "/finance?view=cash",
+  "Occupancy %": drillDownHref("rooms", "occupied"),
+  ADR: drillDownHref("revenue", "adr"),
+  RevPAR: drillDownHref("revenue", "revpar"),
+  "Today's Revenue": drillDownHref("revenue", "today"),
+  "MTD Revenue": drillDownHref("revenue", "mtd"),
+  "Cash Position": drillDownHref("finance", "cash-position"),
 };
 
 export const ROOMS_KPI_ROUTES: Record<string, string> = {
-  "Rooms Available": "/rooms?status=vacant-clean",
-  "Rooms Sold": "/rooms?status=occupied",
-  "Occupancy %": "/rooms",
-  "Arrivals Today": "/rooms?focus=arrivals",
-  "Departures Today": "/rooms?focus=departures",
-  "No-Shows": "/alerts?severity=critical",
+  "Rooms Available": drillDownHref("rooms", "available"),
+  "Rooms Sold": drillDownHref("rooms", "sold"),
+  "Occupancy %": drillDownHref("rooms", "occupancy"),
+  "Arrivals Today": drillDownHref("rooms", "arrivals"),
+  "Departures Today": drillDownHref("rooms", "departures"),
+  "No-Shows": drillDownHref("rooms", "no-shows"),
+};
+
+export const REVENUE_KPI_ROUTES: Record<string, string> = {
+  "Occupancy Forecast": drillDownHref("revenue", "occupancy-forecast"),
+  "ADR Forecast": drillDownHref("revenue", "adr-forecast"),
+  "Room Revenue Forecast": drillDownHref("revenue", "room-revenue-forecast"),
+  "Pickup (Last 7 Days)": drillDownHref("revenue", "pickup-7-days"),
+  "Pickup (Today)": drillDownHref("revenue", "pickup-today"),
+};
+
+export const FNB_KPI_ROUTES: Record<string, string> = {
+  "Today's Sales": drillDownHref("fnb", "today-sales"),
+  Covers: drillDownHref("fnb", "covers"),
+  "Average Check": drillDownHref("fnb", "average-check"),
+  Discounts: drillDownHref("fnb", "discounts"),
+  Voids: drillDownHref("fnb", "voids"),
+};
+
+export const INVENTORY_KPI_ROUTES: Record<string, string> = {
+  "Total Stock Value": drillDownHref("inventory", "stock-value"),
+  "Below Reorder Level": drillDownHref("inventory", "below-reorder"),
+  "Pending POs": drillDownHref("inventory", "pending-pos"),
+  "Price Variance Alerts": drillDownHref("inventory", "price-variance"),
+};
+
+export const FINANCE_KPI_ROUTES: Record<string, string> = {
+  "Total Revenue Today": drillDownHref("finance", "total-revenue-today"),
+  "Cash Balance": drillDownHref("finance", "cash-balance"),
+  "Accounts Receivable": drillDownHref("finance", "accounts-receivable"),
+  "Accounts Payable": drillDownHref("finance", "accounts-payable"),
 };
 
 export const EXCEPTION_ROUTES: Record<string, string> = {
-  "High Discounts": "/alerts?department=Front%20Office",
-  "Unsettled Folios": "/finance?view=receivables",
-  "No-Shows": "/rooms?focus=arrivals",
-  "Negative Stock": "/inventory?focus=negative",
-  "Overdue Receivables": "/finance?view=receivables",
-  "Room Maintenance": "/rooms?status=maintenance",
+  "High Discounts": drillDownHref("revenue", "high-discounts"),
+  "Unsettled Folios": drillDownHref("finance", "unsettled-folios"),
+  "No-Shows": drillDownHref("rooms", "no-shows"),
+  "Negative Stock": drillDownHref("inventory", "negative-stock"),
+  "Overdue Receivables": drillDownHref("finance", "overdue-receivables"),
+  "Room Maintenance": drillDownHref("rooms", "maintenance"),
 };
 
 export function roomDetailHref(roomNumber: string) {
@@ -32,5 +71,13 @@ export function roomDetailHref(roomNumber: string) {
 }
 
 export function revenueDayHref(dateLabel: string) {
-  return `/revenue?range=day&date=${encodeURIComponent(dateLabel)}`;
+  return drillDownHref("revenue", "day", { date: dateLabel });
+}
+
+export function occupancyForecastHref(dateLabel?: string) {
+  return drillDownHref(
+    "rooms",
+    "occupancy-forecast",
+    dateLabel ? { date: dateLabel } : undefined
+  );
 }

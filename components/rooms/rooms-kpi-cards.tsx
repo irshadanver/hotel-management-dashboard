@@ -24,15 +24,15 @@ interface RoomKPICardProps {
 
 function RoomKPICard({ title, value, subtitle, icon, color }: RoomKPICardProps) {
   return (
-    <Card className="shadow-sm">
-      <CardContent className="flex items-center gap-4 p-5">
+    <Card className="h-full shadow-sm">
+      <CardContent className="flex h-full min-h-[116px] items-center gap-4 p-5">
         <div
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
           style={{ backgroundColor: color }}
         >
           {icon}
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 space-y-1">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
           <p className="text-2xl font-semibold tracking-tight text-foreground">
             {value}
@@ -64,7 +64,7 @@ export function RoomsKPICards() {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {kpis.map((kpi) => {
         const href = ROOMS_KPI_ROUTES[kpi.title];
         const card = (
@@ -78,7 +78,12 @@ export function RoomsKPICards() {
           />
         );
         return href ? (
-          <DrillDownCard key={kpi.title} href={href} ariaLabel={`Drill down: ${kpi.title}`}>
+          <DrillDownCard
+            key={kpi.title}
+            href={href}
+            ariaLabel={`Drill down: ${kpi.title}`}
+            className="h-full"
+          >
             {card}
           </DrillDownCard>
         ) : (

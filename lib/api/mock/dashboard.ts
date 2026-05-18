@@ -11,6 +11,7 @@ export interface DashboardKPI {
 export interface DashboardArrival {
   id: string;
   guestName: string;
+  room?: string;
   roomType: string;
   eta: string;
   status: "confirmed" | "pending" | "vip";
@@ -108,6 +109,7 @@ export const mockDashboardArrivals: DashboardArrival[] = [
   {
     id: "1",
     guestName: "Mohammed Al-Rashid",
+    room: "214",
     roomType: "Deluxe King",
     eta: "14:00",
     status: "confirmed",
@@ -115,6 +117,7 @@ export const mockDashboardArrivals: DashboardArrival[] = [
   {
     id: "2",
     guestName: "Sarah Johnson",
+    room: "305",
     roomType: "Executive Suite",
     eta: "15:30",
     status: "vip",
@@ -122,6 +125,7 @@ export const mockDashboardArrivals: DashboardArrival[] = [
   {
     id: "3",
     guestName: "Ahmed Hassan",
+    room: "501",
     roomType: "Standard Twin",
     eta: "16:00",
     status: "confirmed",
@@ -129,6 +133,7 @@ export const mockDashboardArrivals: DashboardArrival[] = [
   {
     id: "4",
     guestName: "Emily Chen",
+    room: "410",
     roomType: "Deluxe Twin",
     eta: "17:30",
     status: "pending",
@@ -136,6 +141,7 @@ export const mockDashboardArrivals: DashboardArrival[] = [
   {
     id: "5",
     guestName: "Khalid Al-Saud",
+    room: "1001",
     roomType: "Royal Suite",
     eta: "18:00",
     status: "vip",
