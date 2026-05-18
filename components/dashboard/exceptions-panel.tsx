@@ -3,8 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { useDashboardExceptions } from "@/lib/api/hooks/use-dashboard";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { EXCEPTION_ROUTES } from "@/lib/drill-down/routes";
 import type { DashboardException } from "@/lib/api/mock/dashboard";
 
 const severityConfig: Record<
@@ -54,20 +57,17 @@ export function ExceptionsPanel() {
             </Badge>
           )}
         </div>
+        <p className="text-xs text-muted-foreground pt-1">
+          Click an item to drill down
+        </p>
       </CardHeader>
       <CardContent className="space-y-2">
         {exceptions.map((exception) => {
           const config = severityConfig[exception.severity];
-          return (
-            <div
-              key={exception.id}
-              className={cn(
-                "flex items-center justify-between rounded-lg border p-3",
-                config.bg,
-                config.border
-              )}
-            >
-              <div className="space-y-0.5">
+          const href = EXCEPTION_ROUTES[exception.category];
+          const content = (
+            <>
+              <div className="min-w-0 flex-1 space-y-0.5">
                 <p className={cn("text-sm font-medium", config.text)}>
                   {exception.category}
                 </p>
@@ -75,16 +75,39 @@ export function ExceptionsPanel() {
                   {exception.description}
                 </p>
               </div>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "shrink-0 border-0 font-semibold",
-                  config.badgeBg,
-                  config.text
+              <div className="flex shrink-0 items-center gap-1">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "border-0 font-semibold",
+                    config.badgeBg,
+                    config.text
+                  )}
+                >
+                  {exception.count}
+                </Badge>
+                {href && (
+                  <ChevronRight className="h-4 w-4 opacity-50" aria-hidden />
                 )}
-              >
-                {exception.count}
-              </Badge>
+              </div>
+            </>
+          );
+          const className = cn(
+            "flex items-center justify-between gap-2 rounded-lg border p-3",
+            config.bg,
+            config.border,
+            href && "cursor-pointer transition-opacity hover:opacity-90"
+          );
+          if (href) {
+            return (
+              <Link key={exception.id} href={href} className={className}>
+                {content}
+              </Link>
+            );
+          }
+          return (
+            <div key={exception.id} className={className}>
+              {content}
             </div>
           );
         })}

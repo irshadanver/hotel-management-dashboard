@@ -10,10 +10,13 @@ import {
   YAxis,
 } from "recharts";
 
+import { useRouter } from "next/navigation";
 import { useRevenueTrend } from "@/lib/api/hooks/use-dashboard";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { revenueDayHref } from "@/lib/drill-down/routes";
 
 export function RevenueChart() {
+  const router = useRouter();
   const { data, loading, error } = useRevenueTrend();
 
   if (loading) {
@@ -41,11 +44,25 @@ export function RevenueChart() {
         <CardTitle className="text-base font-semibold">
           Revenue Trend (Last 7 Days)
         </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Click a point to drill down to revenue
+        </p>
       </CardHeader>
       <CardContent>
         <div className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data as { date: string; revenue: number }[]}>
+            <LineChart
+              data={data as { date: string; revenue: number }[]}
+              className="cursor-pointer"
+              onClick={(state) => {
+                const payload = state?.activePayload?.[0]?.payload as
+                  | { date: string }
+                  | undefined;
+                if (payload?.date) {
+                  router.push(revenueDayHref(payload.date));
+                }
+              }}
+            >
               <XAxis
                 dataKey="date"
                 axisLine={false}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { RoomsKPICards } from "@/components/rooms/rooms-kpi-cards";
 import { RoomStatusGrid } from "@/components/rooms/room-status-grid";
@@ -9,8 +10,12 @@ import { DeparturesList } from "@/components/rooms/departures-list";
 import { VIPPanel } from "@/components/rooms/vip-panel";
 import { RoomsFilters } from "@/components/rooms/rooms-filters";
 import { RoomsOccupancyChart } from "@/components/rooms/rooms-occupancy-chart";
+import { DataLoading } from "@/components/shared/data-loading";
 
-export default function RoomsPage() {
+function RoomsPageContent() {
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get("status");
+  const highlightRoom = searchParams.get("room");
   const [selectedDate, setSelectedDate] = useState("today");
   const [selectedRoomType, setSelectedRoomType] = useState("all");
 
@@ -31,7 +36,11 @@ export default function RoomsPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <RoomStatusGrid selectedRoomType={selectedRoomType} />
+          <RoomStatusGrid
+            selectedRoomType={selectedRoomType}
+            statusFilter={statusFilter}
+            highlightRoom={highlightRoom}
+          />
         </div>
         <div className="space-y-6">
           <ArrivalsList />
@@ -42,5 +51,13 @@ export default function RoomsPage() {
 
       <RoomsOccupancyChart />
     </DashboardShell>
+  );
+}
+
+export default function RoomsPage() {
+  return (
+    <Suspense fallback={<DataLoading label="Loading rooms..." />}>
+      <RoomsPageContent />
+    </Suspense>
   );
 }

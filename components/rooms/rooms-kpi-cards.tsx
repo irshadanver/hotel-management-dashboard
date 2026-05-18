@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { useRoomsKPIs } from "@/lib/api/hooks/use-rooms";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { DrillDownCard } from "@/components/shared/drill-down-card";
+import { ROOMS_KPI_ROUTES } from "@/lib/drill-down/routes";
 
 interface RoomKPICardProps {
   title: string;
@@ -63,16 +65,26 @@ export function RoomsKPICards() {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      {kpis.map((kpi) => (
-        <RoomKPICard
-          key={kpi.title}
-          title={kpi.title}
-          value={kpi.value}
-          subtitle={kpi.subtitle}
-          color={kpi.color}
-          icon={kpiIcons[kpi.title] ?? <BedDouble className="h-6 w-6 text-white" />}
-        />
-      ))}
+      {kpis.map((kpi) => {
+        const href = ROOMS_KPI_ROUTES[kpi.title];
+        const card = (
+          <RoomKPICard
+            key={kpi.title}
+            title={kpi.title}
+            value={kpi.value}
+            subtitle={kpi.subtitle}
+            color={kpi.color}
+            icon={kpiIcons[kpi.title] ?? <BedDouble className="h-6 w-6 text-white" />}
+          />
+        );
+        return href ? (
+          <DrillDownCard key={kpi.title} href={href} ariaLabel={`Drill down: ${kpi.title}`}>
+            {card}
+          </DrillDownCard>
+        ) : (
+          card
+        );
+      })}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-export function DataLoading({ label = "Loading..." }: { label?: string }) {
+export function DataLoading({ label = "Loading…" }: { label?: string }) {
   return (
     <p className="py-8 text-center text-sm text-muted-foreground">{label}</p>
   );

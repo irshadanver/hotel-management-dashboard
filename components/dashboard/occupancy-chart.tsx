@@ -10,10 +10,12 @@ import {
   YAxis,
 } from "recharts";
 
+import { useRouter } from "next/navigation";
 import { useOccupancyForecast } from "@/lib/api/hooks/use-dashboard";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 
 export function OccupancyChart() {
+  const router = useRouter();
   const { data, loading, error } = useOccupancyForecast();
 
   if (loading) {
@@ -41,11 +43,18 @@ export function OccupancyChart() {
         <CardTitle className="text-base font-semibold">
           Occupancy Forecast (Next 14 Days)
         </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Click a point to drill down to rooms
+        </p>
       </CardHeader>
       <CardContent>
         <div className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data as { date: string; forecast: number }[]}>
+            <LineChart
+              data={data as { date: string; forecast: number }[]}
+              className="cursor-pointer"
+              onClick={() => router.push("/rooms")}
+            >
               <XAxis
                 dataKey="date"
                 axisLine={false}

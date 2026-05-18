@@ -177,9 +177,17 @@ const severityConfig = {
   },
 };
 
-export function AlertsTable() {
-  const [activeTab, setActiveTab] = useState<AlertTab>("all");
-  const [department, setDepartment] = useState("All Departments");
+interface AlertsTableProps {
+  initialTab?: AlertTab;
+  initialDepartment?: string;
+}
+
+export function AlertsTable({
+  initialTab = "all",
+  initialDepartment = "All Departments",
+}: AlertsTableProps) {
+  const [activeTab, setActiveTab] = useState<AlertTab>(initialTab);
+  const [department, setDepartment] = useState(initialDepartment);
   const [alerts, setAlerts] = useState(alertsData);
 
   const filteredAlerts = alerts.filter((alert) => {
