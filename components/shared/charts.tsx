@@ -193,6 +193,14 @@ interface SimpleBarChartProps {
   height?: number;
   barSize?: number;
   stacked?: boolean;
+  /** Same length as data: distinct fill per bar (single-series charts). Enables category legends. */
+  cellFills?: string[];
+  /** When vertical, width reserved for category labels (outlet names, etc.). */
+  categoryAxisWidth?: number;
+  /** When vertical, show every category tick (default Recharts can hide some when height is tight). */
+  showAllCategoryTicks?: boolean;
+  /** When horizontal, angle (degrees) for category labels; reserves bottom margin. */
+  categoryTickAngle?: number;
 }
 
 export function SimpleBarChart({
@@ -204,8 +212,19 @@ export function SimpleBarChart({
   height = 280,
   barSize = 20,
   stacked = false,
+  cellFills,
+  categoryAxisWidth,
+  showAllCategoryTicks = true,
+  categoryTickAngle,
 }: SimpleBarChartProps) {
   const isVertical = layout === "vertical";
+  const useCells =
+    bars.length === 1 &&
+    Array.isArray(cellFills) &&
+    cellFills.length === data.length;
+  const yCatWidth = categoryAxisWidth ?? (isVertical ? 88 : 60);
+  const xTickAngle = categoryTickAngle ?? 0;
+  const bottomPad = isVertical ? 8 : xTickAngle ? 72 : 8;
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -213,10 +232,10 @@ export function SimpleBarChart({
         data={data}
         layout={isVertical ? "vertical" : "horizontal"}
         margin={{
-          top: 5,
-          right: 20,
-          left: isVertical ? 60 : 10,
-          bottom: 5,
+          top: 8,
+          right: 24,
+          left: isVertical ? yCatWidth + 8 : 10,
+          bottom: bottomPad,
         }}
         barGap={4}
       >
@@ -237,19 +256,24 @@ export function SimpleBarChart({
             <YAxis
               type="category"
               dataKey={xAxisKey}
+              interval={showAllCategoryTicks ? 0 : undefined}
               tick={{ fontSize: 11, fill: "#6b7280" }}
               axisLine={false}
               tickLine={false}
-              width={55}
+              width={yCatWidth}
             />
           </>
         ) : (
           <>
             <XAxis
               dataKey={xAxisKey}
+              interval={showAllCategoryTicks ? 0 : undefined}
               tick={{ fontSize: 11, fill: "#6b7280" }}
               axisLine={{ stroke: "#e5e7eb" }}
               tickLine={false}
+              angle={xTickAngle || undefined}
+              textAnchor={xTickAngle ? "end" : "middle"}
+              height={xTickAngle ? 68 : undefined}
             />
             <YAxis
               tickFormatter={valueFormatter}
@@ -264,7 +288,7 @@ export function SimpleBarChart({
           formatter={(value: number, name: string) => [valueFormatter(value), name]}
           {...tooltipStyle}
         />
-        {bars.map((bar, index) => (
+        {bars.map((bar) => (
           <Bar
             key={bar.dataKey}
             dataKey={bar.dataKey}
@@ -273,7 +297,17 @@ export function SimpleBarChart({
             barSize={barSize}
             name={bar.name || bar.dataKey}
             stackId={stacked ? "stack" : undefined}
-          />
+            minPointSize={4}
+          >
+            {useCells
+              ? data.map((_, i) => (
+                  <Cell
+                    key={`bar-cell-${i}`}
+                    fill={cellFills[i] ?? bar.color}
+                  />
+                ))
+              : null}
+          </Bar>
         ))}
       </BarChart>
     </ResponsiveContainer>

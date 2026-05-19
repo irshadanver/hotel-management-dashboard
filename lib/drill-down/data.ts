@@ -33,6 +33,7 @@ import {
   getFilteredFnBKPIs,
   getFilteredOpenChecks,
   getFilteredOutletSales,
+  getOutletSalesDrillAxis,
   getFnBDiscountsNumber,
   getFnBVoidsNumber,
   type FnBFilters,
@@ -41,6 +42,8 @@ import type { DateRangePreset } from "@/lib/date/date-range-preset";
 import { buildDateRangeQuery } from "@/lib/date/date-range-query";
 import { mockNumericScale } from "@/lib/date/preset-multipliers";
 import { formatSAR, type Room } from "@/lib/types";
+import { parseSarToNumber } from "@/lib/format/sar";
+import type { DrillDownChartSpec } from "./chart-spec";
 import type { DrillDateSource, DrillDownUrlParams } from "./query-params";
 
 export interface DrillDownColumn {
@@ -60,6 +63,8 @@ export interface DrillDownDataset {
   rows: Record<string, string | number>[];
   /** When set, summary "Primary Value" matches the KPI that launched this drill-down */
   primaryMetric?: string;
+  /** Optional chart derived client-side or attached here for richer drill-downs */
+  chart?: DrillDownChartSpec;
 }
 
 const roomColumns: DrillDownColumn[] = [
@@ -825,12 +830,6 @@ const fnbRows = {
   ],
 };
 
-function sarStringToNumber(value: string): number {
-  const m = String(value).match(/([\d,]+)/);
-  if (!m) return 0;
-  return parseInt(m[1].replace(/,/g, ""), 10) || 0;
-}
-
 function fnbDrillScopeLabel(filters: FnBFilters): string {
   const date = filters.date ?? "today";
   const outlet = filters.outlet ?? "all";
@@ -855,14 +854,16 @@ function fnbDrillScopeLabel(filters: FnBFilters): string {
 function fnbKpiNumber(filters: FnBFilters, title: string): number {
   const raw = getFilteredFnBKPIs(filters).find((k) => k.title === title)?.value;
   if (typeof raw === "number") return raw;
-  return sarStringToNumber(String(raw ?? "0"));
+  return parseSarToNumber(String(raw ?? "0"));
 }
 
 function fnbSalesDrillRows(filters: FnBFilters): Record<string, string | number>[] {
-  return getFilteredOutletSales(filters).map((row) => ({
+  return getOutletSalesDrillAxis(filters).map((row) => ({
     outlet: row.outlet,
     metric: "Sales",
     value: formatSAR(row.sales),
+    /** Numeric SAR for charts (avoids locale digit parsing issues on `value`). */
+    valueNum: row.sales,
     status: "Posted",
   }));
 }
@@ -893,6 +894,7 @@ function fnbCoversAverageCheckRows(filters: FnBFilters): {
       outlet: row.outlet,
       metric: "Average Check",
       value: formatSAR(avg),
+      valueNum: avg,
       status: avg >= 85 ? "High" : "Normal",
     });
   }
@@ -1004,7 +1006,7 @@ function inventoryPendingPosDrillRows(
   poValueTotal: number
 ): (typeof inventoryRows)["pending-pos"] {
   const baseAmounts = template.map((r) =>
-    sarStringToNumber(String(r.reorderLevel))
+    parseSarToNumber(String(r.reorderLevel))
   );
   const baseSum = baseAmounts.reduce((a, b) => a + b, 0) || 1;
   const scaledSar = baseAmounts.map((b) =>
@@ -1113,15 +1115,15 @@ function scaleAmountRowsByPrimary<T extends { amount: string }>(
   primaryLabel: string,
   baseTotalFallback: number
 ): T[] {
-  const target = sarStringToNumber(primaryLabel);
+  const target = parseSarToNumber(primaryLabel);
   const baseSum =
-    rows.reduce((s, r) => s + sarStringToNumber(r.amount), 0) ||
+    rows.reduce((s, r) => s + parseSarToNumber(r.amount), 0) ||
     baseTotalFallback;
   if (!target || !baseSum) return rows;
   const factor = target / baseSum;
   return rows.map((r) => ({
     ...r,
-    amount: formatSAR(Math.round(sarStringToNumber(r.amount) * factor)),
+    amount: formatSAR(Math.round(parseSarToNumber(r.amount) * factor)),
   }));
 }
 
@@ -1356,13 +1358,13 @@ export function getDrillDownDataset(
         const f = revenueFiltersFromDrill(params);
         const kpi = getFilteredRevenueKPIs(f).find((k) => k.title === "ADR Forecast");
         primaryMetric = kpi?.value !== undefined ? String(kpi.value) : undefined;
-        pivotAdr = sarStringToNumber(primaryMetric ?? "SAR 485");
+        pivotAdr = parseSarToNumber(primaryMetric ?? "SAR 485");
         rowSource = "Revenue dashboard · ADR Forecast KPI";
       } else {
         const q = drillDashboardRange(params);
         const k = getDashboardKPIsForRange(q).find((x) => x.title === "ADR");
         primaryMetric = k?.value !== undefined ? String(k.value) : undefined;
-        pivotAdr = sarStringToNumber(primaryMetric ?? "SAR 485");
+        pivotAdr = parseSarToNumber(primaryMetric ?? "SAR 485");
         rowSource = `Header range · ${q.startDate}–${q.endDate}`;
       }
 
@@ -1403,7 +1405,7 @@ export function getDrillDownDataset(
       const primaryMetric =
         kpi?.value !== undefined ? String(kpi.value) : undefined;
       const baseAmounts = roomRevenueForecastRows.map((r) =>
-        sarStringToNumber(String(r.amount))
+        parseSarToNumber(String(r.amount))
       );
       const baseSum = baseAmounts.reduce((a, b) => a + b, 0) || 1;
       const rounded = baseAmounts.map((b) =>
@@ -1733,7 +1735,7 @@ export function getDrillDownDataset(
         kpi?.value !== undefined ? String(kpi.value) : formatSAR(pivot);
       const baseRows = fnbRows.discounts;
       const baseAmounts = baseRows.map((r) =>
-        sarStringToNumber(String(r.value))
+        parseSarToNumber(String(r.value))
       );
       const baseSum = baseAmounts.reduce((a, b) => a + b, 0) || 1;
       const scaled = baseAmounts.map((b) =>
@@ -1767,7 +1769,7 @@ export function getDrillDownDataset(
         kpi?.value !== undefined ? String(kpi.value) : formatSAR(pivot);
       const baseRows = fnbRows.voids;
       const baseAmounts = baseRows.map((r) =>
-        sarStringToNumber(String(r.value))
+        parseSarToNumber(String(r.value))
       );
       const baseSum = baseAmounts.reduce((a, b) => a + b, 0) || 1;
       const scaled = baseAmounts.map((b) =>
@@ -1803,7 +1805,7 @@ export function getDrillDownDataset(
         view,
         title: titleMap["today-sales"],
         subtitle: `Outlet sales for ${fnbScope}, aligned with the Today's Sales KPI.`,
-        source: "lib/api/mock/fnb.ts -> getFilteredOutletSales",
+        source: "lib/api/mock/fnb.ts -> getOutletSalesDrillAxis",
         apiRequired: `GET /api/fnb/${view}`,
         columns: fnbColumns,
         rows: fnbSalesDrillRows(fnbDrillFilters),
@@ -2032,7 +2034,7 @@ export function getDrillDownDataset(
     const baseRows = financeRows[view as keyof typeof financeRows] as FinanceDrillRow[];
     const rows = baseRows.map((r) => ({
       ...r,
-      amount: formatSAR(Math.round(sarStringToNumber(r.amount) * fin.m)),
+      amount: formatSAR(Math.round(parseSarToNumber(r.amount) * fin.m)),
     }));
 
     return {
@@ -2117,7 +2119,7 @@ export function getDrillDownDataset(
       const rows = inventoryPendingPosDrillRows(
         inventoryRows["pending-pos"],
         inv.pos,
-        sarStringToNumber(inv.pendingPoTotalDisplay)
+        parseSarToNumber(inv.pendingPoTotalDisplay)
       );
       return {
         domain,

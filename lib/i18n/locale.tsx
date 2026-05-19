@@ -217,6 +217,40 @@ const arabicText: Record<string, string> = {
   Dataset: "مجموعة البيانات",
   View: "العرض",
   "No records for this drill-down.": "لا توجد سجلات لهذا التفصيل.",
+  "Try changing filters on the source screen, then open this drill-down again.":
+    "جرّب تغيير المرشحات في الشاشة المصدر، ثم افتح هذا التفصيل مرة أخرى.",
+  "You are viewing": "أنت تعرض",
+  "Table total": "إجمالي الجدول",
+  "Primary (KPI)": "القيمة الرئيسية (المؤشر)",
+  "Within tolerance": "ضمن هامش التطابق",
+  "Mismatch vs KPI — check filters or rounding":
+    "اختلاف عن المؤشر — راجع المرشحات أو التقريب",
+  "Breakdown rows": "صفوف التفصيل",
+  "Rows in supporting table": "الصفوف في الجدول الداعم",
+  "Primary value": "القيمة الرئيسية",
+  "Matches the KPI you clicked": "يطابق المؤشر الذي نقرت عليه",
+  "Top visible metric from data": "المؤشر الظاهر من البيانات",
+  "Occupancy range": "نطاق الإشغال",
+  "Largest slice": "أكبر شريحة",
+  "Largest aging bucket": "أكبر دلو أعمار",
+  "Share of total": "حصة من الإجمالي",
+  "By amount": "حسب المبلغ",
+  "Distinct statuses in table": "حالات مميزة في الجدول",
+  "Occupancy trend": "اتجاه الإشغال",
+  "From supporting records": "من السجلات الداعمة",
+  "Rooms by segment": "الغرف حسب النوع",
+  "Count per room type": "العدد لكل نوع غرفة",
+  "By outlet": "حسب المنفذ",
+  "Sales amount": "مبلغ المبيعات",
+  "Covers by outlet": "الأغطية حسب المنفذ",
+  "Average check by outlet": "متوسط الفاتورة حسب المنفذ",
+  "From drill-down table": "من جدول التفصيل",
+  "AR by bucket": "الذمم المدينة حسب الدلو",
+  "Posted amounts": "المبالغ المسجّلة",
+  "Stock value mix": "مزيج قيمة المخزون",
+  "By category (mock)": "حسب الفئة (تجريبي)",
+  "Status groups": "مجموعات الحالة",
+  "Last day:": "آخر يوم:",
   "Back to dashboard": "العودة إلى لوحة التحكم",
   "Back to": "العودة إلى",
   "Drill down": "عرض التفاصيل",
@@ -446,6 +480,9 @@ const arabicText: Record<string, string> = {
 
 function translateDynamicText(text: string) {
   return text
+    .replace(/Last day: /g, `${arabicText["Last day:"] ?? "آخر يوم:"} `)
+    .replace(/% of rows below/g, "% من الصفوف أدناه")
+    .replace(/\bSAR\b/g, "ر.س")
     .replace(/\bGuests served\b/g, "نزلاء تم تقديم الخدمة لهم")
     .replace(/\bPer cover\b/g, "لكل غطاء")
     .replace(/\bof sales\b/g, "من المبيعات")

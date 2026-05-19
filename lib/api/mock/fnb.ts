@@ -197,6 +197,22 @@ function filteredOutletRows(filters?: FnBFilters) {
     .map((row) => ({ ...row, sales: scaleAmount(row.sales, n) }));
 }
 
+/**
+ * Outlet rows for Today's Sales drill table/chart: when viewing all outlets,
+ * always returns the full catalog in filter order (zero-filled if a row were missing).
+ */
+export function getOutletSalesDrillAxis(filters?: FnBFilters): OutletSalesRow[] {
+  const n = normalizeFilters(filters);
+  const rows = filteredOutletRows(filters);
+  if (n.outlet !== "all") return rows;
+  const byId = new Map(rows.map((r) => [r.outletId, r]));
+  return baseOutletSales.map((base) => {
+    const existing = byId.get(base.outletId);
+    if (existing) return existing;
+    return { ...base, sales: 0 };
+  });
+}
+
 export function getFilteredFnBKPIs(filters?: FnBFilters): FnBKPI[] {
   const n = normalizeFilters(filters);
   const salesRows = filteredOutletRows(filters);

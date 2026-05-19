@@ -68,6 +68,7 @@ export function OutletSalesChart({ filters }: OutletSalesChartProps) {
               <YAxis
                 type="category"
                 dataKey="outlet"
+                interval={0}
                 tick={{ fontSize: 12, fill: "#6b7280" }}
                 axisLine={false}
                 tickLine={false}

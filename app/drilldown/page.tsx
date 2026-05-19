@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -14,6 +14,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import type { NavItemId } from "@/components/layout/dashboard-shell";
+import { DrillDownChartPanel } from "@/components/drill-down/drill-chart-panel";
 import { DataLoading } from "@/components/shared/data-loading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,14 @@ import {
   getDrillDownDataset,
   type DrillDownDataset,
 } from "@/lib/drill-down/data";
+import { formatDrillContextLines } from "@/lib/drill-down/drill-context-label";
+import { inferDrillChart } from "@/lib/drill-down/infer-drill-chart";
+import {
+  getDrillBreakdownRows,
+  getDrillSummaryCards,
+  reconciliationForDataset,
+} from "@/lib/drill-down/summary-stats";
+import { formatSAR } from "@/lib/types";
 import type { DrillDownUrlParams } from "@/lib/drill-down/query-params";
 
 const domainToNav: Record<string, NavItemId> = {
@@ -49,6 +58,8 @@ const domainToHref: Record<string, string> = {
   finance: "/finance",
   inventory: "/inventory",
 };
+
+const SUMMARY_ICONS = [ListChecks, TrendingUp, BarChart3] as const;
 
 function getPrimaryValue(dataset: DrillDownDataset) {
   if (dataset.primaryMetric) return dataset.primaryMetric;
@@ -89,35 +100,6 @@ function getPrimaryValue(dataset: DrillDownDataset) {
   if ("occupancy" in firstRow) return String(firstRow.occupancy);
   if ("stock" in firstRow) return String(firstRow.stock);
   return String(dataset.rows.length);
-}
-
-function getSummaryCards(dataset: DrillDownDataset) {
-  const uniqueStatuses = new Set(
-    dataset.rows
-      .map((row) => row.status)
-      .filter((status): status is string | number => status !== undefined)
-  );
-
-  return [
-    {
-      label: "Breakdown Rows",
-      value: dataset.rows.length.toString(),
-      helper: "Rows shown below",
-      icon: ListChecks,
-    },
-    {
-      label: "Primary Value",
-      value: getPrimaryValue(dataset),
-      helper: "Top visible metric",
-      icon: TrendingUp,
-    },
-    {
-      label: "Status Groups",
-      value: uniqueStatuses.size ? uniqueStatuses.size.toString() : "1",
-      helper: "Distinct statuses",
-      icon: BarChart3,
-    },
-  ];
 }
 
 function getInsight(dataset: DrillDownDataset) {
@@ -177,39 +159,52 @@ function getActions(dataset: DrillDownDataset) {
   return ["Review details", "Assign owner", "Mark as reviewed"];
 }
 
-function getBreakdownRows(dataset: DrillDownDataset) {
-  const statusCounts = new Map<string, number>();
+function statusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+  const s = status.toLowerCase();
+  if (s.includes("critical") || s.includes("negative") || s.includes("overdue"))
+    return "destructive";
+  if (s.includes("posted") || s.includes("reconciled") || s.includes("completed"))
+    return "default";
+  if (s.includes("pending") || s.includes("open") || s.includes("awaiting"))
+    return "secondary";
+  return "outline";
+}
 
-  for (const row of dataset.rows) {
-    const status = String(row.status ?? row.metric ?? row.type ?? "Other");
-    statusCounts.set(status, (statusCounts.get(status) ?? 0) + 1);
-  }
-
-  return Array.from(statusCounts.entries()).slice(0, 5);
+function isStatusColumn(columnKey: string): boolean {
+  return columnKey === "status";
 }
 
 function DrillDownContent() {
   const searchParams = useSearchParams();
   const { isRTL, tr } = useLocale();
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
-  const drillParams: DrillDownUrlParams = {
-    date: searchParams.get("date"),
-    ctx: searchParams.get("ctx") as DrillDownUrlParams["ctx"],
-    preset: searchParams.get("preset") ?? undefined,
-    startDate: searchParams.get("startDate") ?? undefined,
-    endDate: searchParams.get("endDate") ?? undefined,
-    roomsDate: searchParams.get("roomsDate") ?? undefined,
-    roomType: searchParams.get("roomType") ?? undefined,
-    revRange: searchParams.get("revRange") ?? undefined,
-    revSegment: searchParams.get("revSegment") ?? undefined,
-    fnbDate: searchParams.get("fnbDate") ?? undefined,
-    fnbOutlet: searchParams.get("fnbOutlet") ?? undefined,
-  };
-  const dataset = getDrillDownDataset(
-    searchParams.get("domain"),
-    searchParams.get("view"),
-    drillParams
+  const drillParams: DrillDownUrlParams = useMemo(
+    () => ({
+      date: searchParams.get("date"),
+      ctx: searchParams.get("ctx") as DrillDownUrlParams["ctx"],
+      preset: searchParams.get("preset") ?? undefined,
+      startDate: searchParams.get("startDate") ?? undefined,
+      endDate: searchParams.get("endDate") ?? undefined,
+      roomsDate: searchParams.get("roomsDate") ?? undefined,
+      roomType: searchParams.get("roomType") ?? undefined,
+      revRange: searchParams.get("revRange") ?? undefined,
+      revSegment: searchParams.get("revSegment") ?? undefined,
+      fnbDate: searchParams.get("fnbDate") ?? undefined,
+      fnbOutlet: searchParams.get("fnbOutlet") ?? undefined,
+    }),
+    [searchParams]
   );
+
+  const dataset = useMemo(() => {
+    const d = getDrillDownDataset(
+      searchParams.get("domain"),
+      searchParams.get("view"),
+      drillParams
+    );
+    if (!d) return null;
+    const chart = inferDrillChart(d);
+    return chart ? { ...d, chart } : d;
+  }, [searchParams, drillParams]);
 
   if (!dataset) {
     return (
@@ -237,6 +232,10 @@ function DrillDownContent() {
 
   const backHref = domainToHref[dataset.domain] ?? "/";
   const backLabel = `${tr("Back to")} ${tr(dataset.domain === "fnb" ? "F&B" : dataset.domain)}`;
+  const contextLines = formatDrillContextLines(drillParams);
+  const summaryCards = getDrillSummaryCards(dataset, getPrimaryValue(dataset));
+  const breakdownRows = getDrillBreakdownRows(dataset);
+  const recon = reconciliationForDataset(dataset);
 
   return (
     <DashboardShell
@@ -257,11 +256,24 @@ function DrillDownContent() {
         <Badge variant="outline">{tr("View")}: {tr(dataset.view)}</Badge>
       </div>
 
+      {contextLines.length > 0 && (
+        <Card className="border-dashed bg-muted/20">
+          <CardContent className="flex flex-wrap gap-x-4 gap-y-2 py-3 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">{tr("You are viewing")}</span>
+            {contextLines.map((line) => (
+              <span key={line} className="rounded-md bg-background/80 px-2 py-0.5 font-mono">
+                {line}
+              </span>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-3">
-        {getSummaryCards(dataset).map((card) => {
-          const Icon = card.icon;
+        {summaryCards.map((card, index) => {
+          const Icon = SUMMARY_ICONS[index] ?? ListChecks;
           return (
-            <Card key={card.label}>
+            <Card key={card.label} className={index === 1 && dataset.primaryMetric ? "ring-1 ring-primary/25" : undefined}>
               <CardContent className="flex min-h-[112px] items-center gap-4 p-5">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" />
@@ -279,6 +291,12 @@ function DrillDownContent() {
         })}
       </div>
 
+      {dataset.chart && (
+        <div className="w-full max-w-5xl min-w-0">
+          <DrillDownChartPanel spec={dataset.chart} />
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -292,7 +310,7 @@ function DrillDownContent() {
               {tr(getInsight(dataset).text)}
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {getBreakdownRows(dataset).map(([label, count]) => (
+              {breakdownRows.map(([label, count]) => (
                 <div
                   key={label}
                   className="flex items-center justify-between rounded-lg border bg-muted/20 px-3 py-2 text-sm"
@@ -337,47 +355,96 @@ function DrillDownContent() {
             <p>{tr("Source")}: {tr(dataset.source)}</p>
             <p>API_REQUIRED: {dataset.apiRequired}</p>
           </div>
+          {recon && (
+            <div
+              className={cn(
+                "mt-3 rounded-lg border px-3 py-2 text-sm",
+                recon.ok
+                  ? "border-emerald-200 bg-emerald-50/60 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100"
+                  : "border-amber-200 bg-amber-50/60 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100"
+              )}
+            >
+              <span className="font-medium">{tr("Table total")}</span>{" "}
+              {formatSAR(recon.tableTotal)}
+              <span className="mx-2 text-muted-foreground">·</span>
+              <span className="font-medium">{tr("Primary (KPI)")}</span>{" "}
+              {formatSAR(recon.primaryParsed)}
+              <span className="ms-2 text-xs">
+                {recon.ok ? tr("Within tolerance") : tr("Mismatch vs KPI — check filters or rounding")}
+              </span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {dataset.columns.map((column) => (
-                  <TableHead
-                    key={column.key}
-                    className={cn(column.align === "right" && "text-right")}
-                  >
-                    {tr(column.header)}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dataset.rows.length === 0 ? (
+          <div className="max-h-[min(70vh,720px)] overflow-auto rounded-md border">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-card shadow-sm [&_tr]:border-b">
                 <TableRow>
-                  <TableCell
-                    colSpan={dataset.columns.length}
-                    className="py-8 text-center text-muted-foreground"
-                  >
-                    {tr("No records for this drill-down.")}
-                  </TableCell>
+                  {dataset.columns.map((column) => (
+                    <TableHead
+                      key={column.key}
+                      className={cn(
+                        "whitespace-nowrap bg-card",
+                        column.align === "right" && "text-right"
+                      )}
+                    >
+                      {tr(column.header)}
+                    </TableHead>
+                  ))}
                 </TableRow>
-              ) : (
-                dataset.rows.map((row, index) => (
-                  <TableRow key={index}>
-                    {dataset.columns.map((column) => (
-                      <TableCell
-                        key={column.key}
-                        className={cn(column.align === "right" && "text-right")}
-                      >
-                        {typeof row[column.key] === "string" ? tr(String(row[column.key])) : row[column.key] ?? "-"}
-                      </TableCell>
-                    ))}
+              </TableHeader>
+              <TableBody>
+                {dataset.rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={dataset.columns.length}
+                      className="py-8 text-center text-muted-foreground"
+                    >
+                      <p>{tr("No records for this drill-down.")}</p>
+                      {dataset.primaryMetric && (
+                        <p className="mt-2 text-xs">
+                          {tr("Try changing filters on the source screen, then open this drill-down again.")}
+                        </p>
+                      )}
+                    </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  dataset.rows.map((row, index) => (
+                    <TableRow
+                      key={index}
+                      className={index % 2 === 1 ? "bg-muted/30" : undefined}
+                    >
+                      {dataset.columns.map((column) => {
+                        const raw = row[column.key];
+                        const display =
+                          typeof raw === "string" ? tr(String(raw)) : raw ?? "-";
+                        const isStatus = isStatusColumn(column.key);
+                        return (
+                          <TableCell
+                            key={column.key}
+                            className={cn(
+                              column.align === "right" && "text-right tabular-nums",
+                              isStatus &&
+                                typeof raw === "string" &&
+                                "whitespace-nowrap"
+                            )}
+                          >
+                            {isStatus && typeof raw === "string" ? (
+                              <Badge variant={statusBadgeVariant(raw)}>
+                                {tr(raw)}
+                              </Badge>
+                            ) : (
+                              display
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </DashboardShell>
