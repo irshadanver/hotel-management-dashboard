@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { cn } from "@/lib/utils";
 import { getStoredSession } from "@/lib/auth/session";
+import { useLocale } from "@/lib/i18n/locale";
 
 export type NavItemId =
   | "dashboard"
@@ -37,6 +38,7 @@ export function DashboardShell({
   const [authorized, setAuthorized] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { isRTL, t, tr } = useLocale();
 
   useEffect(() => {
     if (getStoredSession()) {
@@ -50,7 +52,7 @@ export function DashboardShell({
   if (!authorized) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
-        Checking session...
+        {t.checkingSession}
       </div>
     );
   }
@@ -68,16 +70,22 @@ export function DashboardShell({
       <main
         className={cn(
           "min-h-screen pt-16 transition-all duration-300",
-          sidebarCollapsed ? "pl-16" : "pl-60"
+          isRTL
+            ? sidebarCollapsed
+              ? "pr-16"
+              : "pr-60"
+            : sidebarCollapsed
+              ? "pl-16"
+              : "pl-60"
         )}
       >
         <div className="flex">
           <div className="flex-1 space-y-6 p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+                <h2 className="text-2xl font-semibold text-foreground">{tr(title)}</h2>
                 {subtitle && (
-                  <p className="text-sm text-muted-foreground">{subtitle}</p>
+                  <p className="text-sm text-muted-foreground">{tr(subtitle)}</p>
                 )}
               </div>
               {headerActions}
@@ -85,7 +93,12 @@ export function DashboardShell({
             {children}
           </div>
           {rightPanel && (
-            <aside className="w-80 shrink-0 border-l bg-muted/30 p-6">
+            <aside
+              className={cn(
+                "w-80 shrink-0 bg-muted/30 p-6",
+                isRTL ? "border-r" : "border-l"
+              )}
+            >
               {rightPanel}
             </aside>
           )}

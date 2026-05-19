@@ -13,6 +13,7 @@ import { FNB_KPI_ROUTES } from "@/lib/drill-down/routes";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useFnBKPIs } from "@/lib/api/hooks/use-fnb";
 import type { FnBFilters } from "@/lib/api/mock/fnb";
+import { useLocale } from "@/lib/i18n/locale";
 
 const kpiVisuals = {
   "Today's Sales": {
@@ -43,6 +44,7 @@ interface FnBKPICardsProps {
 
 export function FnBKPICards({ filters }: FnBKPICardsProps) {
   const { data: kpis, loading, error } = useFnBKPIs(filters);
+  const { tr } = useLocale();
 
   if (loading) return <DataLoading label="Loading F&B KPIs..." />;
   if (error || !kpis) {
@@ -67,7 +69,7 @@ export function FnBKPICards({ filters }: FnBKPICardsProps) {
           <DrillDownCard
             key={kpi.title}
             href={href}
-            ariaLabel={`Drill down: ${kpi.title}`}
+            ariaLabel={`${tr("Drill down")}: ${tr(kpi.title)}`}
             className="h-full"
           >
             {card}

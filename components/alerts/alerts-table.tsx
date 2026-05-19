@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,131 +14,14 @@ import {
 } from "@/components/ui/select";
 import { CheckCircle, Filter } from "lucide-react";
 import { ALERT_ROUTES } from "@/lib/drill-down/routes";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { useAlerts } from "@/lib/api/hooks/use-alerts";
+import { DataError, DataLoading } from "@/components/shared/data-loading";
 
 type Severity = "critical" | "warning" | "info";
 type Status = "open" | "resolved";
 type AlertTab = "all" | "critical" | "warning" | "info";
-
-interface Alert {
-  id: number;
-  type: string;
-  description: string;
-  department: string;
-  severity: Severity;
-  timestamp: string;
-  status: Status;
-}
-
-const alertsData: Alert[] = [
-  {
-    id: 1,
-    type: "High Discount",
-    description: "35% discount applied on Room 405 - Guest: Ahmed Al-Rashid",
-    department: "Front Office",
-    severity: "critical",
-    timestamp: "2024-01-15 14:32",
-    status: "open",
-  },
-  {
-    id: 2,
-    type: "Pending Balance",
-    description: "Guest checkout with SAR 2,450 pending - Room 312",
-    department: "Front Office",
-    severity: "critical",
-    timestamp: "2024-01-15 14:15",
-    status: "open",
-  },
-  {
-    id: 3,
-    type: "Negative Stock",
-    description: "Chicken Breast stock at -5 units in Main Kitchen",
-    department: "Inventory",
-    severity: "critical",
-    timestamp: "2024-01-15 13:45",
-    status: "open",
-  },
-  {
-    id: 4,
-    type: "PO Pending Approval",
-    description: "PO-2024-0156 for SAR 12,500 awaiting Finance approval",
-    department: "Purchasing",
-    severity: "warning",
-    timestamp: "2024-01-15 12:30",
-    status: "open",
-  },
-  {
-    id: 5,
-    type: "Overdue Receivable",
-    description: "Global Industries - SAR 125,000 overdue by 45 days",
-    department: "Finance",
-    severity: "critical",
-    timestamp: "2024-01-15 11:00",
-    status: "open",
-  },
-  {
-    id: 6,
-    type: "Room Maintenance",
-    description: "Room 508 AC unit requires repair - Guest complaint",
-    department: "Engineering",
-    severity: "warning",
-    timestamp: "2024-01-15 10:45",
-    status: "open",
-  },
-  {
-    id: 7,
-    type: "Open Check",
-    description: "Check #4521 open for 2+ hours at Lobby Cafe",
-    department: "F&B",
-    severity: "warning",
-    timestamp: "2024-01-15 10:30",
-    status: "open",
-  },
-  {
-    id: 8,
-    type: "Price Variance",
-    description: "Supplier price increased 15% on Salmon - Above threshold",
-    department: "Purchasing",
-    severity: "warning",
-    timestamp: "2024-01-15 09:15",
-    status: "open",
-  },
-  {
-    id: 9,
-    type: "VIP Arrival",
-    description: "Platinum member arriving at 3:00 PM - Room upgrade ready",
-    department: "Front Office",
-    severity: "info",
-    timestamp: "2024-01-15 09:00",
-    status: "open",
-  },
-  {
-    id: 10,
-    type: "Daily Report",
-    description: "Night audit completed successfully",
-    department: "Finance",
-    severity: "info",
-    timestamp: "2024-01-15 06:00",
-    status: "resolved",
-  },
-  {
-    id: 11,
-    type: "Inventory Count",
-    description: "Monthly stock count scheduled for tomorrow",
-    department: "Inventory",
-    severity: "info",
-    timestamp: "2024-01-15 08:00",
-    status: "open",
-  },
-  {
-    id: 12,
-    type: "High Discount",
-    description: "28% discount on banquet booking - Manager approved",
-    department: "Sales",
-    severity: "warning",
-    timestamp: "2024-01-14 16:00",
-    status: "resolved",
-  },
-];
 
 const departments = [
   "All Departments",
@@ -187,9 +71,34 @@ export function AlertsTable({
   initialTab = "all",
   initialDepartment = "All Departments",
 }: AlertsTableProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<AlertTab>(initialTab);
   const [department, setDepartment] = useState(initialDepartment);
-  const [alerts, setAlerts] = useState(alertsData);
+  const { rangeQueryKey } = useGlobalDateFilter();
+  const { data: fetchedAlerts, loading, error } = useAlerts();
+  const [resolvedIds, setResolvedIds] = useState<Set<number>>(new Set());
+  const { tr } = useLocale();
+
+  useEffect(() => {
+    setResolvedIds(new Set());
+  }, [rangeQueryKey]);
+
+  const alerts = useMemo(() => {
+    if (!fetchedAlerts) return [];
+    return fetchedAlerts.map((alert) =>
+      resolvedIds.has(alert.id)
+        ? { ...alert, status: "resolved" as Status }
+        : alert
+    );
+  }, [fetchedAlerts, resolvedIds]);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  useEffect(() => {
+    setDepartment(initialDepartment);
+  }, [initialDepartment]);
 
   const filteredAlerts = alerts.filter((alert) => {
     const matchesTab = activeTab === "all" || alert.severity === activeTab;
@@ -199,11 +108,28 @@ export function AlertsTable({
   });
 
   const handleResolve = (id: number) => {
-    setAlerts((prev) =>
-      prev.map((alert) =>
-        alert.id === id ? { ...alert, status: "resolved" as Status } : alert
-      )
-    );
+    setResolvedIds((prev) => new Set(prev).add(id));
+  };
+
+  const updateUrlFilters = (nextTab: AlertTab, nextDepartment: string) => {
+    const params = new URLSearchParams();
+    if (nextTab !== "all") params.set("severity", nextTab);
+    if (nextDepartment !== "All Departments") {
+      params.set("department", nextDepartment);
+    }
+
+    const query = params.toString();
+    router.replace(query ? `/alerts?${query}` : "/alerts", { scroll: false });
+  };
+
+  const handleTabChange = (tab: AlertTab) => {
+    setActiveTab(tab);
+    updateUrlFilters(tab, department);
+  };
+
+  const handleDepartmentChange = (nextDepartment: string) => {
+    setDepartment(nextDepartment);
+    updateUrlFilters(activeTab, nextDepartment);
   };
 
   const getCounts = () => {
@@ -222,23 +148,45 @@ export function AlertsTable({
 
   const counts = getCounts();
 
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <DataLoading label={tr("Loading alerts...")} />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !fetchedAlerts) {
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <DataError
+            message={error?.message ?? tr("Failed to load alerts")}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-lg font-semibold">
-            Alerts & Exceptions
+            {tr("Alerts & Exceptions")}
           </CardTitle>
           <div className="flex items-center gap-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={department} onValueChange={setDepartment}>
+            <Select value={department} onValueChange={handleDepartmentChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {departments.map((dept) => (
                   <SelectItem key={dept} value={dept}>
-                    {dept}
+                    {tr(dept)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -251,14 +199,14 @@ export function AlertsTable({
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? "border-b-2 border-primary text-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab.label}
+              {tr(tab.label)}
               <span
                 className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs ${
                   activeTab === tab.id
@@ -278,13 +226,13 @@ export function AlertsTable({
           <table className="w-full">
             <thead>
               <tr className="border-b text-left text-sm text-muted-foreground">
-                <th className="pb-3 pr-4 font-medium">Alert Type</th>
-                <th className="pb-3 pr-4 font-medium">Description</th>
-                <th className="pb-3 pr-4 font-medium">Department</th>
-                <th className="pb-3 pr-4 font-medium">Severity</th>
-                <th className="pb-3 pr-4 font-medium">Timestamp</th>
-                <th className="pb-3 pr-4 font-medium">Status</th>
-                <th className="pb-3 font-medium">Action</th>
+                <th className="pb-3 pr-4 font-medium">{tr("Alert Type")}</th>
+                <th className="pb-3 pr-4 font-medium">{tr("Description")}</th>
+                <th className="pb-3 pr-4 font-medium">{tr("Department")}</th>
+                <th className="pb-3 pr-4 font-medium">{tr("Severity")}</th>
+                <th className="pb-3 pr-4 font-medium">{tr("Timestamp")}</th>
+                <th className="pb-3 pr-4 font-medium">{tr("Status")}</th>
+                <th className="pb-3 font-medium">{tr("Action")}</th>
               </tr>
             </thead>
             <tbody className="text-sm">
@@ -302,22 +250,22 @@ export function AlertsTable({
                     } ${
                       alert.status === "resolved" ? "opacity-60" : ""
                     }`}
-                    title={drillDownHref ? "Click row to view details" : undefined}
+                    title={drillDownHref ? tr("Click row to view details") : undefined}
                   >
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-2">
                         <span
                           className={`h-2 w-2 rounded-full ${config.dot}`}
                         />
-                        <span className="font-medium">{alert.type}</span>
+                        <span className="font-medium">{tr(alert.type)}</span>
                       </div>
                     </td>
                     <td className="max-w-xs truncate py-3 pr-4 text-muted-foreground">
-                      {alert.description}
+                      {tr(alert.description)}
                     </td>
                     <td className="py-3 pr-4">
                       <Badge variant="outline" className="font-normal">
-                        {alert.department}
+                        {tr(alert.department)}
                       </Badge>
                     </td>
                     <td className="py-3 pr-4">
@@ -325,7 +273,7 @@ export function AlertsTable({
                         variant="outline"
                         className={`${config.bg} ${config.text} ${config.border}`}
                       >
-                        {alert.severity}
+                        {tr(alert.severity)}
                       </Badge>
                     </td>
                     <td className="py-3 pr-4 text-muted-foreground">
@@ -342,7 +290,7 @@ export function AlertsTable({
                             : ""
                         }
                       >
-                        {alert.status === "open" ? "Open" : "Resolved"}
+                        {tr(alert.status === "open" ? "Open" : "Resolved")}
                       </Badge>
                     </td>
                     <td className="py-3">
@@ -358,12 +306,12 @@ export function AlertsTable({
                             className="h-8 gap-1.5 text-xs"
                           >
                             <CheckCircle className="h-3.5 w-3.5" />
-                            Resolve
+                            {tr("Resolve")}
                           </Button>
                         ) : (
                           <span className="flex items-center gap-1 text-xs text-green-600">
                             <CheckCircle className="h-3.5 w-3.5" />
-                            Done
+                            {tr("Done")}
                           </span>
                         )}
                       </div>
@@ -376,7 +324,7 @@ export function AlertsTable({
 
           {filteredAlerts.length === 0 && (
             <div className="py-12 text-center text-muted-foreground">
-              No alerts found matching your filters.
+              {tr("No alerts found matching your filters.")}
             </div>
           )}
         </div>

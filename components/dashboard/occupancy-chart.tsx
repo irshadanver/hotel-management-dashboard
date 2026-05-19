@@ -14,10 +14,12 @@ import { useRouter } from "next/navigation";
 import { useOccupancyForecast } from "@/lib/api/hooks/use-dashboard";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { occupancyForecastHref } from "@/lib/drill-down/routes";
+import { useLocale } from "@/lib/i18n/locale";
 
 export function OccupancyChart() {
   const router = useRouter();
   const { data, loading, error } = useOccupancyForecast();
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -42,10 +44,10 @@ export function OccupancyChart() {
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
-          Occupancy Forecast (Next 14 Days)
+          {tr("Occupancy Forecast (Next 14 Days)")}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Click a point to drill down to rooms
+          {tr("Click a point to drill down to rooms")}
         </p>
       </CardHeader>
       <CardContent>
@@ -84,7 +86,7 @@ export function OccupancyChart() {
                   borderRadius: "8px",
                   fontSize: "12px",
                 }}
-                formatter={(value: number) => [`${value}%`, "Forecast"]}
+                formatter={(value: number) => [`${value}%`, tr("Forecast")]}
               />
               <Line
                 type="monotone"

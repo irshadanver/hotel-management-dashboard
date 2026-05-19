@@ -4,13 +4,27 @@ import {
   mockOccupancyForecast,
   mockRevenueTrend,
 } from "@/lib/api/mock/dashboard";
+import { getDashboardKPIsForRange, getOccupancyForecastForRange } from "@/lib/api/mock/dashboard-for-preset";
 import {
   mockRoomArrivals,
   mockRoomDepartures,
   mockRooms,
-  mockRoomsOccupancyTrend,
+  getFilteredRoomsKPIs,
+  getFilteredRoomsOccupancyTrend,
+  type RoomFilters,
 } from "@/lib/api/mock/rooms";
+import {
+  getRevenueDrillAdrDisplay,
+  getRevenueDrillCashPositionDisplay,
+  getRevenueDrillMtdRevenueDisplay,
+  getRevenueDrillRevparDisplay,
+  getRevenueDrillTodayRevenueDisplay,
+  type RevenueFilters,
+} from "@/lib/api/mock/revenue";
+import type { DateRangePreset } from "@/lib/date/date-range-preset";
+import { buildDateRangeQuery } from "@/lib/date/date-range-query";
 import { formatSAR } from "@/lib/types";
+import type { DrillDateSource, DrillDownUrlParams } from "./query-params";
 
 export interface DrillDownColumn {
   key: string;
@@ -27,6 +41,8 @@ export interface DrillDownDataset {
   apiRequired: string;
   columns: DrillDownColumn[];
   rows: Record<string, string | number>[];
+  /** When set, summary "Primary Value" matches the KPI that launched this drill-down */
+  primaryMetric?: string;
 }
 
 const roomColumns: DrillDownColumn[] = [
@@ -718,10 +734,62 @@ const fnbRows = {
   ],
 };
 
+function sarStringToNumber(value: string): number {
+  const m = String(value).match(/([\d,]+)/);
+  if (!m) return 0;
+  return parseInt(m[1].replace(/,/g, ""), 10) || 0;
+}
+
+function inferDrillCtx(
+  domain: string | null,
+  view: string | null,
+  params?: DrillDownUrlParams | null
+): DrillDateSource {
+  const c = params?.ctx;
+  if (c === "dashboard" || c === "rooms" || c === "revenue") return c;
+  if (domain === "rooms" && view === "occupancy") return "rooms";
+  return "dashboard";
+}
+
+function drillDashboardRange(params?: DrillDownUrlParams | null) {
+  const preset = (params?.preset as DateRangePreset) ?? "today";
+  return buildDateRangeQuery(
+    preset,
+    params?.startDate ?? "",
+    params?.endDate ?? ""
+  );
+}
+
+function revenueFiltersFromDrill(
+  params?: DrillDownUrlParams | null
+): RevenueFilters {
+  return {
+    range: params?.revRange ?? "30d",
+    segment: params?.revSegment ?? "all",
+  };
+}
+
+function scaleAmountRowsByPrimary<T extends { amount: string }>(
+  rows: T[],
+  primaryLabel: string,
+  baseTotalFallback: number
+): T[] {
+  const target = sarStringToNumber(primaryLabel);
+  const baseSum =
+    rows.reduce((s, r) => s + sarStringToNumber(r.amount), 0) ||
+    baseTotalFallback;
+  if (!target || !baseSum) return rows;
+  const factor = target / baseSum;
+  return rows.map((r) => ({
+    ...r,
+    amount: formatSAR(Math.round(sarStringToNumber(r.amount) * factor)),
+  }));
+}
+
 export function getDrillDownDataset(
   domain: string | null,
   view: string | null,
-  params?: { date?: string | null }
+  params?: DrillDownUrlParams | null
 ): DrillDownDataset | null {
   if (domain === "rooms") {
     if (view === "occupied" || view === "sold") {
@@ -818,23 +886,60 @@ export function getDrillDownDataset(
     }
 
     if (view === "occupancy") {
+      const ctx = inferDrillCtx(domain, view, params);
+      let primaryMetric: string | undefined;
+      let rows: Record<string, string | number>[];
+      let subtitle: string;
+
+      if (ctx === "dashboard") {
+        const q = drillDashboardRange(params);
+        const kpi = getDashboardKPIsForRange(q).find((k) => k.title === "Occupancy %");
+        primaryMetric = kpi?.value;
+        const forecast = getOccupancyForecastForRange(q);
+        rows = forecast.map((point) => ({
+          date: String(point.date),
+          occupancy:
+            typeof point.forecast === "number"
+              ? `${Math.round(point.forecast)}%`
+              : "-",
+          source: `Header range · ${q.startDate}–${q.endDate}`,
+        }));
+        subtitle =
+          "Occupancy aligned with the executive dashboard KPI for the selected header date range.";
+      } else {
+        const filters: RoomFilters = {
+          date: (params?.roomsDate as RoomFilters["date"]) ?? "today",
+          roomType: (params?.roomType as RoomFilters["roomType"]) ?? "all",
+        };
+        const trend = getFilteredRoomsOccupancyTrend(filters);
+        const kpi = getFilteredRoomsKPIs(filters).find((k) => k.title === "Occupancy %");
+        primaryMetric = String(kpi?.value ?? "");
+        rows = trend.map((point) => ({
+          date: String(point.date),
+          occupancy: `${Math.round(Number(point.occupancy))}%`,
+          source: `Rooms dashboard · ${filters.date} · ${filters.roomType}`,
+        }));
+        subtitle =
+          "Occupancy from the Rooms dashboard date and room-type filters.";
+      }
+
       return {
         domain,
         view,
         title: "Rooms Occupancy",
-        subtitle: "Occupancy data from the rooms/occupancy dataset.",
-        source: "lib/api/mock/rooms.ts -> mockRoomsOccupancyTrend",
+        subtitle,
+        source:
+          ctx === "dashboard"
+            ? "lib/api/mock/dashboard-for-preset.ts (header date range)"
+            : "lib/api/mock/rooms.ts -> getFilteredRoomsOccupancyTrend",
         apiRequired: "GET /api/rooms/occupancy-trend",
         columns: [
           { key: "date", header: "Date" },
           { key: "occupancy", header: "Occupancy", align: "right" },
           { key: "source", header: "Source" },
         ],
-        rows: mockRoomsOccupancyTrend.map((point) => ({
-          date: String(point.date),
-          occupancy: `${point.occupancy}%`,
-          source: params?.date ? `Selected point: ${params.date}` : "Rooms forecast",
-        })),
+        rows,
+        primaryMetric,
       };
     }
 
@@ -949,6 +1054,28 @@ export function getDrillDownDataset(
     }
 
     if (view === "adr") {
+      const ctx = inferDrillCtx(domain, view, params);
+      const date = params?.date ?? undefined;
+      let primaryMetric: string | undefined;
+      let rows = revenueRows("ADR", date);
+      if (ctx === "dashboard") {
+        const q = drillDashboardRange(params);
+        const k = getDashboardKPIsForRange(q).find((x) => x.title === "ADR");
+        primaryMetric = k?.value;
+        rows = rows.map((r) => ({
+          ...r,
+          amount: primaryMetric ?? r.amount,
+          source: `Header range · ${q.startDate}–${q.endDate}`,
+        }));
+      } else if (ctx === "revenue") {
+        const f = revenueFiltersFromDrill(params);
+        primaryMetric = getRevenueDrillAdrDisplay(f);
+        rows = rows.map((r) => ({
+          ...r,
+          amount: primaryMetric ?? r.amount,
+          source: "Revenue dashboard filters",
+        }));
+      }
       return {
         domain,
         view,
@@ -957,11 +1084,34 @@ export function getDrillDownDataset(
         source: "lib/api/mock/dashboard.ts -> mockRevenueTrend",
         apiRequired: "GET /api/revenue/kpis?metric=adr",
         columns: revenueColumns,
-        rows: revenueRows("ADR"),
+        rows,
+        primaryMetric,
       };
     }
 
     if (view === "revpar") {
+      const ctx = inferDrillCtx(domain, view, params);
+      const date = params?.date ?? undefined;
+      let primaryMetric: string | undefined;
+      let rows = revenueRows("RevPAR", date);
+      if (ctx === "dashboard") {
+        const q = drillDashboardRange(params);
+        const k = getDashboardKPIsForRange(q).find((x) => x.title === "RevPAR");
+        primaryMetric = k?.value;
+        rows = rows.map((r) => ({
+          ...r,
+          amount: primaryMetric ?? r.amount,
+          source: `Header range · ${q.startDate}–${q.endDate}`,
+        }));
+      } else if (ctx === "revenue") {
+        const f = revenueFiltersFromDrill(params);
+        primaryMetric = getRevenueDrillRevparDisplay(f);
+        rows = rows.map((r) => ({
+          ...r,
+          amount: primaryMetric ?? r.amount,
+          source: "Revenue dashboard filters",
+        }));
+      }
       return {
         domain,
         view,
@@ -970,7 +1120,8 @@ export function getDrillDownDataset(
         source: "lib/api/mock/dashboard.ts -> mockRevenueTrend",
         apiRequired: "GET /api/revenue/kpis?metric=revpar",
         columns: revenueColumns,
-        rows: revenueRows("RevPAR"),
+        rows,
+        primaryMetric,
       };
     }
 
@@ -989,6 +1140,33 @@ export function getDrillDownDataset(
 
     const date = params?.date ?? undefined;
     if (!date && view === "mtd") {
+      const ctx = inferDrillCtx(domain, view, params);
+      let primaryMetric: string | undefined;
+      let rows: Record<string, string | number>[] = revenueMtdRows;
+      const baseMtdTotal = 1_856_200;
+
+      if (ctx === "dashboard") {
+        const q = drillDashboardRange(params);
+        const k = getDashboardKPIsForRange(q).find((x) => x.title === "MTD Revenue");
+        primaryMetric = k?.value;
+        if (primaryMetric) {
+          rows = scaleAmountRowsByPrimary(
+            [...revenueMtdRows],
+            primaryMetric,
+            baseMtdTotal
+          );
+        }
+      } else if (ctx === "revenue") {
+        primaryMetric = getRevenueDrillMtdRevenueDisplay(
+          revenueFiltersFromDrill(params)
+        );
+        rows = scaleAmountRowsByPrimary(
+          [...revenueMtdRows],
+          primaryMetric,
+          baseMtdTotal
+        );
+      }
+
       return {
         domain,
         view,
@@ -997,11 +1175,27 @@ export function getDrillDownDataset(
         source: "Revenue MTD summary mock dataset",
         apiRequired: "GET /api/revenue?period=mtd",
         columns: revenueColumns,
-        rows: revenueMtdRows,
+        rows,
+        primaryMetric,
       };
     }
 
     if (!date && (!view || view === "today")) {
+      const ctx = inferDrillCtx(domain, view, params);
+      let primaryMetric: string | undefined;
+      let rows: Record<string, string | number>[] = revenueTodayRows;
+      if (ctx === "dashboard") {
+        const q = drillDashboardRange(params);
+        const k = getDashboardKPIsForRange(q).find((x) => x.title === "Today's Revenue");
+        primaryMetric = k?.value;
+        if (primaryMetric) {
+          rows = scaleAmountRowsByPrimary([...revenueTodayRows], primaryMetric, 127450);
+        }
+      } else if (ctx === "revenue") {
+        const f = revenueFiltersFromDrill(params);
+        primaryMetric = getRevenueDrillTodayRevenueDisplay(f);
+        rows = scaleAmountRowsByPrimary([...revenueTodayRows], primaryMetric, 127450);
+      }
       return {
         domain,
         view: view ?? "today",
@@ -1010,7 +1204,8 @@ export function getDrillDownDataset(
         source: "Revenue daily summary mock dataset",
         apiRequired: "GET /api/revenue?date=today",
         columns: revenueColumns,
-        rows: revenueTodayRows,
+        rows,
+        primaryMetric,
       };
     }
 
@@ -1064,15 +1259,46 @@ export function getDrillDownDataset(
       "accounts-payable": "Accounts Payable",
     };
 
+    const baseRows = financeRows[view as keyof typeof financeRows] as {
+      account: string;
+      type: string;
+      amount: string;
+      status: string;
+    }[];
+    let rows: typeof baseRows = [...baseRows];
+    let primaryMetric: string | undefined;
+    let subtitle = "Finance dataset only.";
+
+    if (view === "cash-position") {
+      const ctx = inferDrillCtx(domain, view, params);
+      if (ctx === "dashboard") {
+        const q = drillDashboardRange(params);
+        const k = getDashboardKPIsForRange(q).find((x) => x.title === "Cash Position");
+        primaryMetric = k?.value;
+        subtitle =
+          "Cash position aligned with the executive dashboard for the selected header date range.";
+      } else if (ctx === "revenue") {
+        primaryMetric = getRevenueDrillCashPositionDisplay(
+          revenueFiltersFromDrill(params)
+        );
+        subtitle =
+          "Cash position scaled to match the Revenue dashboard range and segment filters.";
+      }
+      if (primaryMetric) {
+        rows = scaleAmountRowsByPrimary(rows, primaryMetric, 542800);
+      }
+    }
+
     return {
       domain,
       view,
       title: titleMap[view as keyof typeof financeRows],
-      subtitle: "Finance dataset only.",
+      subtitle,
       source: "Finance mock dataset",
       apiRequired: `GET /api/finance/${view}`,
       columns: financeColumns,
-      rows: financeRows[view as keyof typeof financeRows],
+      rows,
+      primaryMetric,
     };
   }
 

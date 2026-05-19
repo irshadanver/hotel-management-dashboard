@@ -1,8 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle } from "lucide-react";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockNumericScale } from "@/lib/date/preset-multipliers";
 
 interface Invoice {
   invoiceNo: string;
@@ -23,8 +27,19 @@ const overdueInvoices: Invoice[] = [
 ];
 
 export function OverdueInvoicesTable() {
-  const totalOverdue = overdueInvoices.reduce((sum, inv) => sum + inv.amount, 0);
-  const criticalCount = overdueInvoices.filter((inv) => inv.severity === "critical").length;
+  const { rangeQuery } = useGlobalDateFilter();
+  const m = mockNumericScale(rangeQuery);
+  const invoices = useMemo(
+    () =>
+      overdueInvoices.map((inv) => ({
+        ...inv,
+        amount: Math.round(inv.amount * m),
+      })),
+    [m]
+  );
+  const totalOverdue = invoices.reduce((sum, inv) => sum + inv.amount, 0);
+  const criticalCount = invoices.filter((inv) => inv.severity === "critical").length;
+  const { tr } = useLocale();
 
   return (
     <Card className="shadow-sm">
@@ -32,11 +47,11 @@ export function OverdueInvoicesTable() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-red-500" />
-            <CardTitle className="text-base font-semibold">Overdue Invoices</CardTitle>
+            <CardTitle className="text-base font-semibold">{tr("Overdue Invoices")}</CardTitle>
           </div>
           <div className="flex items-center gap-3">
             <Badge variant="destructive" className="text-xs">
-              {criticalCount} critical
+              {criticalCount} {tr("critical")}
             </Badge>
             <p className="text-sm font-semibold text-red-600">SAR {totalOverdue.toLocaleString()}</p>
           </div>
@@ -47,14 +62,14 @@ export function OverdueInvoicesTable() {
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-background">
               <tr className="border-b bg-muted/30">
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Invoice</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Customer</th>
-                <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Amount</th>
-                <th className="px-4 py-2.5 text-center font-medium text-muted-foreground">Days</th>
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">{tr("Invoice")}</th>
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">{tr("Customer")}</th>
+                <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">{tr("Amount")}</th>
+                <th className="px-4 py-2.5 text-center font-medium text-muted-foreground">{tr("Days")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-muted/30">
-              {overdueInvoices.map((invoice) => (
+              {invoices.map((invoice) => (
                 <tr
                   key={invoice.invoiceNo}
                   className={`hover:bg-muted/20 ${
@@ -63,7 +78,7 @@ export function OverdueInvoicesTable() {
                 >
                   <td className="px-4 py-3">
                     <p className="font-mono text-xs">{invoice.invoiceNo}</p>
-                    <p className="text-[10px] text-muted-foreground">Due: {invoice.dueDate}</p>
+                    <p className="text-[10px] text-muted-foreground">{tr("Due:")} {invoice.dueDate}</p>
                   </td>
                   <td className="px-4 py-3 font-medium">{invoice.customer}</td>
                   <td className="px-4 py-3 text-right font-semibold">

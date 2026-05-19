@@ -9,6 +9,7 @@ import { useRoomStatus } from "@/lib/api/hooks/use-rooms";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { DetailDrawer } from "@/components/detail/detail-drawer";
 import { RoomDetailPanel } from "@/components/detail/room-detail-panel";
+import { useLocale } from "@/lib/i18n/locale";
 
 const statusConfig: Record<
   RoomStatus,
@@ -66,6 +67,7 @@ export function RoomStatusGrid({
   highlightRoom,
 }: RoomStatusGridProps) {
   const router = useRouter();
+  const { tr } = useLocale();
   const { data: rooms, loading, error } = useRoomStatus({
     date: selectedDate,
     roomType: selectedRoomType,
@@ -143,10 +145,10 @@ export function RoomStatusGrid({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <CardTitle className="text-base font-semibold">
-                Room Status Grid
+                {tr("Room Status Grid")}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                Click a room for details · click legend to filter · {filteredRooms.length} rooms shown
+                {tr("Click a room for details")} · {tr("click legend to filter")} · {filteredRooms.length} {tr("rooms shown")}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -176,7 +178,7 @@ export function RoomStatusGrid({
                     )}
                   />
                   <span className="text-xs text-muted-foreground">
-                    {statusConfig[status].label} ({statusCounts[status] || 0})
+                    {tr(statusConfig[status].label)} ({statusCounts[status] || 0})
                   </span>
                 </button>
               ))}
@@ -191,7 +193,7 @@ export function RoomStatusGrid({
                 <div key={floor}>
                   <div className="mb-2 flex items-center gap-2">
                     <span className="text-xs font-medium text-muted-foreground">
-                      Floor {floor}
+                      {tr("Floor")} {floor}
                     </span>
                     <div className="h-px flex-1 bg-border" />
                   </div>
@@ -232,8 +234,8 @@ export function RoomStatusGrid({
       <DetailDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        title={selectedRoom ? `Room ${selectedRoom.number}` : "Room details"}
-        description="Drill-down detail view"
+        title={selectedRoom ? `${tr("Room")} ${selectedRoom.number}` : tr("Room details")}
+        description={tr("Drill-down detail view")}
       >
         {selectedRoom && <RoomDetailPanel room={selectedRoom} />}
       </DetailDrawer>

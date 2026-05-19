@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart,
@@ -11,8 +12,11 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockNumericScale } from "@/lib/date/preset-multipliers";
 
-const data = [
+const BASE = [
   { period: "Current", amount: 124500, count: 18 },
   { period: "1-30 Days", amount: 89200, count: 12 },
   { period: "31-60 Days", amount: 52400, count: 7 },
@@ -29,19 +33,36 @@ const colors = [
 ];
 
 export function ARAgingChart() {
-  const totalAR = data.reduce((sum, item) => sum + item.amount, 0);
+  const { tr } = useLocale();
+  const { rangeQuery } = useGlobalDateFilter();
+  const m = mockNumericScale(rangeQuery);
+
+  const data = useMemo(
+    () =>
+      BASE.map((row) => ({
+        ...row,
+        amount: Math.round(row.amount * m),
+        count: Math.max(1, Math.round(row.count * (0.9 + 0.1 * m))),
+      })),
+    [m]
+  );
+
+  const totalAR = useMemo(
+    () => data.reduce((sum, item) => sum + item.amount, 0),
+    [data]
+  );
 
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-base font-semibold">Accounts Receivable Aging</CardTitle>
-            <p className="text-xs text-muted-foreground">Outstanding by age bracket</p>
+            <CardTitle className="text-base font-semibold">{tr("Accounts Receivable Aging")}</CardTitle>
+            <p className="text-xs text-muted-foreground">{tr("Outstanding by age bracket")}</p>
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold">SAR {totalAR.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">Total Outstanding</p>
+            <p className="text-xs text-muted-foreground">{tr("Total Outstanding")}</p>
           </div>
         </div>
       </CardHeader>
@@ -68,7 +89,7 @@ export function ARAgingChart() {
               <Tooltip
                 formatter={(value: number, name: string) => [
                   name === "amount" ? `SAR ${value.toLocaleString()}` : value,
-                  name === "amount" ? "Amount" : "Invoices",
+                  name === "amount" ? tr("Amount") : tr("Invoices"),
                 ]}
                 contentStyle={{
                   backgroundColor: "white",
@@ -92,7 +113,7 @@ export function ARAgingChart() {
                 className="mx-auto mb-1 h-2 w-2 rounded-full"
                 style={{ backgroundColor: colors[index] }}
               />
-              <p className="text-[10px] text-muted-foreground">{item.count} invoices</p>
+              <p className="text-[10px] text-muted-foreground">{item.count} {tr("invoices")}</p>
             </div>
           ))}
         </div>

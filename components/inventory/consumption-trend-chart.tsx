@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   LineChart,
@@ -11,8 +12,11 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockNumericScale } from "@/lib/date/preset-multipliers";
 
-const data = [
+const BASE = [
   { date: "Week 1", food: 42000, beverage: 18000, supplies: 12000 },
   { date: "Week 2", food: 38000, beverage: 21000, supplies: 8500 },
   { date: "Week 3", food: 45000, beverage: 19500, supplies: 14000 },
@@ -22,12 +26,27 @@ const data = [
 ];
 
 export function ConsumptionTrendChart() {
+  const { tr } = useLocale();
+  const { rangeQuery } = useGlobalDateFilter();
+  const m = mockNumericScale(rangeQuery);
+
+  const data = useMemo(
+    () =>
+      BASE.map((row) => ({
+        ...row,
+        food: Math.round(row.food * m),
+        beverage: Math.round(row.beverage * m),
+        supplies: Math.round(row.supplies * m),
+      })),
+    [m]
+  );
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">Stock Consumption Trend</CardTitle>
-          <span className="text-xs text-muted-foreground">Last 6 weeks</span>
+          <CardTitle className="text-base font-semibold">{tr("Stock Consumption Trend")}</CardTitle>
+          <span className="text-xs text-muted-foreground">{tr("Last 6 weeks")}</span>
         </div>
       </CardHeader>
       <CardContent>
@@ -59,11 +78,12 @@ export function ConsumptionTrendChart() {
                 verticalAlign="top"
                 align="right"
                 wrapperStyle={{ paddingBottom: "10px", fontSize: "12px" }}
+                formatter={(value) => tr(String(value))}
               />
               <Line
                 type="monotone"
                 dataKey="food"
-                name="Food"
+                name={tr("Food")}
                 stroke="oklch(0.55 0.12 250)"
                 strokeWidth={2}
                 dot={{ r: 3 }}
@@ -72,7 +92,7 @@ export function ConsumptionTrendChart() {
               <Line
                 type="monotone"
                 dataKey="beverage"
-                name="Beverage"
+                name={tr("Beverage")}
                 stroke="oklch(0.60 0.12 165)"
                 strokeWidth={2}
                 dot={{ r: 3 }}
@@ -81,7 +101,7 @@ export function ConsumptionTrendChart() {
               <Line
                 type="monotone"
                 dataKey="supplies"
-                name="Supplies"
+                name={tr("Supplies")}
                 stroke="oklch(0.65 0.15 55)"
                 strokeWidth={2}
                 dot={{ r: 3 }}

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface DrillDownCardProps {
   href: string;
@@ -18,6 +19,9 @@ export function DrillDownCard({
   className,
   ariaLabel,
 }: DrillDownCardProps) {
+  const { isRTL } = useLocale();
+  const Icon = isRTL ? ChevronLeft : ChevronRight;
+
   return (
     <Link
       href={href}
@@ -28,8 +32,11 @@ export function DrillDownCard({
       )}
     >
       {children}
-      <ChevronRight
-        className="absolute right-3 top-3 h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+      <Icon
+        className={cn(
+          "absolute top-3 h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100",
+          isRTL ? "left-3" : "right-3"
+        )}
         aria-hidden
       />
     </Link>

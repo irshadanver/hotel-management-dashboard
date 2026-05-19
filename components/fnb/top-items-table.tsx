@@ -5,6 +5,7 @@ import { TrendingUp } from "lucide-react";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useTopItems } from "@/lib/api/hooks/use-fnb";
 import type { FnBFilters } from "@/lib/api/mock/fnb";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface TopItemsTableProps {
   filters?: FnBFilters;
@@ -12,6 +13,7 @@ interface TopItemsTableProps {
 
 export function TopItemsTable({ filters }: TopItemsTableProps) {
   const { data: topItems, loading, error } = useTopItems(filters);
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -38,7 +40,7 @@ export function TopItemsTable({ filters }: TopItemsTableProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-emerald-600" />
-          <CardTitle className="text-base font-semibold">Top 10 Selling Items</CardTitle>
+          <CardTitle className="text-base font-semibold">{tr("Top 10 Selling Items")}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -47,9 +49,9 @@ export function TopItemsTable({ filters }: TopItemsTableProps) {
             <thead className="sticky top-0 bg-muted/50">
               <tr className="border-b text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-2.5 w-10">#</th>
-                <th className="px-4 py-2.5">Item</th>
-                <th className="px-4 py-2.5 text-right">Qty</th>
-                <th className="px-4 py-2.5 text-right">Revenue</th>
+                <th className="px-4 py-2.5">{tr("Item")}</th>
+                <th className="px-4 py-2.5 text-right">{tr("Qty")}</th>
+                <th className="px-4 py-2.5 text-right">{tr("Revenue")}</th>
               </tr>
             </thead>
             <tbody>
@@ -66,7 +68,7 @@ export function TopItemsTable({ filters }: TopItemsTableProps) {
                   <td className="px-4 py-2.5">
                     <div>
                       <p className="font-medium text-foreground">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.category}</p>
+                      <p className="text-xs text-muted-foreground">{tr(item.category)}</p>
                     </div>
                   </td>
                   <td className="px-4 py-2.5 text-right font-medium tabular-nums">

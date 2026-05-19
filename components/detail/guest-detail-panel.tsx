@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink } from "lucide-react";
+import { useLocale } from "@/lib/i18n/locale";
 
 export interface GuestDrillDown {
   guestName: string;
@@ -21,23 +22,25 @@ interface GuestDetailPanelProps {
 }
 
 export function GuestDetailPanel({ guest, context }: GuestDetailPanelProps) {
+  const { tr } = useLocale();
+
   return (
     <>
       <div className="flex items-center justify-between gap-2">
         <span className="text-xl font-semibold">{guest.guestName}</span>
-        {guest.status && <Badge variant="outline">{guest.status}</Badge>}
+        {guest.status && <Badge variant="outline">{tr(guest.status)}</Badge>}
       </div>
       <dl className="grid gap-3 text-sm">
         {guest.room && (
           <div className="flex justify-between">
-            <dt className="text-muted-foreground">Room</dt>
+            <dt className="text-muted-foreground">{tr("Room")}</dt>
             <dd className="font-medium">{guest.room}</dd>
           </div>
         )}
         {guest.roomType && (
           <div className="flex justify-between">
-            <dt className="text-muted-foreground">Room type</dt>
-            <dd className="font-medium">{guest.roomType}</dd>
+            <dt className="text-muted-foreground">{tr("Room type")}</dt>
+            <dd className="font-medium">{tr(guest.roomType)}</dd>
           </div>
         )}
         {guest.eta && (
@@ -50,7 +53,7 @@ export function GuestDetailPanel({ guest, context }: GuestDetailPanelProps) {
         )}
         {guest.balance !== undefined && (
           <div className="flex justify-between">
-            <dt className="text-muted-foreground">Balance</dt>
+            <dt className="text-muted-foreground">{tr("Balance")}</dt>
             <dd className="font-medium">SAR {guest.balance.toLocaleString()}</dd>
           </div>
         )}
@@ -63,8 +66,8 @@ export function GuestDetailPanel({ guest, context }: GuestDetailPanelProps) {
       {guest.room && (
         <Button asChild variant="outline" className="w-full">
           <Link href={`/rooms?room=${encodeURIComponent(guest.room)}`}>
-            View room {guest.room}
-            <ExternalLink className="ml-2 h-4 w-4" />
+            {tr("View room")} {guest.room}
+            <ExternalLink className="ms-2 h-4 w-4" />
           </Link>
         </Button>
       )}

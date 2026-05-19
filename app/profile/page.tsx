@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { getStoredSession, type HotelUserSession } from "@/lib/auth/session";
+import { useLocale } from "@/lib/i18n/locale";
 
 export default function ProfilePage() {
   const [session, setSession] = useState<HotelUserSession | null>(null);
+  const { tr } = useLocale();
 
   useEffect(() => {
     setSession(getStoredSession());
@@ -23,31 +25,31 @@ export default function ProfilePage() {
     >
       <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-base">Profile</CardTitle>
+          <CardTitle className="text-base">{tr("Profile")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Name</Label>
+            <Label>{tr("Name")}</Label>
             <Input value={session?.name ?? ""} readOnly />
           </div>
           <div className="space-y-2">
-            <Label>Role</Label>
+            <Label>{tr("Role")}</Label>
             <Input value={session?.role ?? ""} readOnly />
           </div>
           <div className="space-y-2">
-            <Label>Chain ID</Label>
+            <Label>{tr("Chain ID")}</Label>
             <Input value={session?.chainId ?? ""} readOnly />
           </div>
           <div className="space-y-2">
-            <Label>Property ID</Label>
+            <Label>{tr("Property ID")}</Label>
             <Input value={session?.propertyId ?? ""} readOnly />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label>Property Name</Label>
+            <Label>{tr("Property Name")}</Label>
             <Input value={session?.propertyName ?? ""} readOnly />
           </div>
           <div className="sm:col-span-2">
-            <Button disabled>Save profile (API required)</Button>
+            <Button disabled>{tr("Save profile (API required)")}</Button>
           </div>
         </CardContent>
       </Card>

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   BarChart3,
   CheckCircle2,
   ListChecks,
@@ -26,10 +27,12 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/locale";
 import {
   getDrillDownDataset,
   type DrillDownDataset,
 } from "@/lib/drill-down/data";
+import type { DrillDownUrlParams } from "@/lib/drill-down/query-params";
 
 const domainToNav: Record<string, NavItemId> = {
   rooms: "rooms",
@@ -48,24 +51,17 @@ const domainToHref: Record<string, string> = {
 };
 
 function getPrimaryValue(dataset: DrillDownDataset) {
+  if (dataset.primaryMetric) return dataset.primaryMetric;
+
   const metricValues: Record<string, string> = {
     "rooms:available": "42",
     "rooms:occupied": "138",
     "rooms:sold": "138",
-    "rooms:occupancy": "81.7%",
     "rooms:occupancy-forecast": "84.3%",
     "rooms:arrivals": "28",
     "rooms:departures": "24",
     "rooms:no-shows": "2",
     "revenue:occupancy-forecast": "84.3%",
-    "revenue:adr-forecast": "SAR 485",
-    "revenue:room-revenue-forecast": "SAR 2.4M",
-    "revenue:pickup-7-days": "342",
-    "revenue:pickup-today": "58",
-    "revenue:adr": "SAR 485",
-    "revenue:revpar": "SAR 380",
-    "revenue:today": "SAR 127,450",
-    "revenue:mtd": "SAR 1,856,200",
     "fnb:today-sales": "SAR 18,450",
     "fnb:covers": "284",
     "fnb:average-check": "SAR 65",
@@ -194,9 +190,24 @@ function getBreakdownRows(dataset: DrillDownDataset) {
 
 function DrillDownContent() {
   const searchParams = useSearchParams();
-  const dataset = getDrillDownDataset(searchParams.get("domain"), searchParams.get("view"), {
+  const { isRTL, tr } = useLocale();
+  const BackIcon = isRTL ? ArrowRight : ArrowLeft;
+  const drillParams: DrillDownUrlParams = {
     date: searchParams.get("date"),
-  });
+    ctx: searchParams.get("ctx") as DrillDownUrlParams["ctx"],
+    preset: searchParams.get("preset") ?? undefined,
+    startDate: searchParams.get("startDate") ?? undefined,
+    endDate: searchParams.get("endDate") ?? undefined,
+    roomsDate: searchParams.get("roomsDate") ?? undefined,
+    roomType: searchParams.get("roomType") ?? undefined,
+    revRange: searchParams.get("revRange") ?? undefined,
+    revSegment: searchParams.get("revSegment") ?? undefined,
+  };
+  const dataset = getDrillDownDataset(
+    searchParams.get("domain"),
+    searchParams.get("view"),
+    drillParams
+  );
 
   if (!dataset) {
     return (
@@ -208,13 +219,12 @@ function DrillDownContent() {
         <Card>
           <CardContent className="space-y-4 p-6">
             <p className="text-sm text-muted-foreground">
-              This link does not point to a known dataset. Go back to the
-              dashboard and try another KPI or exception.
+              {tr("This link does not point to a known dataset. Go back to the dashboard and try another KPI or exception.")}
             </p>
             <Button asChild variant="outline">
               <Link href="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to dashboard
+                <BackIcon className="me-2 h-4 w-4" />
+                {tr("Back to dashboard")}
               </Link>
             </Button>
           </CardContent>
@@ -224,7 +234,7 @@ function DrillDownContent() {
   }
 
   const backHref = domainToHref[dataset.domain] ?? "/";
-  const backLabel = `Back to ${dataset.domain === "fnb" ? "F&B" : dataset.domain}`;
+  const backLabel = `${tr("Back to")} ${tr(dataset.domain === "fnb" ? "F&B" : dataset.domain)}`;
 
   return (
     <DashboardShell
@@ -234,15 +244,15 @@ function DrillDownContent() {
       headerActions={
         <Button asChild variant="outline" size="sm">
           <Link href={backHref}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <BackIcon className="me-2 h-4 w-4" />
             {backLabel}
           </Link>
         </Button>
       }
     >
       <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">Dataset: {dataset.domain}</Badge>
-        <Badge variant="outline">View: {dataset.view}</Badge>
+        <Badge variant="secondary">{tr("Dataset")}: {tr(dataset.domain)}</Badge>
+        <Badge variant="outline">{tr("View")}: {tr(dataset.view)}</Badge>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -255,11 +265,11 @@ function DrillDownContent() {
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
+                  <p className="text-sm text-muted-foreground">{tr(card.label)}</p>
                   <p className="break-words text-2xl font-semibold">
                     {card.value}
                   </p>
-                  <p className="text-xs text-muted-foreground">{card.helper}</p>
+                  <p className="text-xs text-muted-foreground">{tr(card.helper)}</p>
                 </div>
               </CardContent>
             </Card>
@@ -272,12 +282,12 @@ function DrillDownContent() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <CardTitle className="text-base">{getInsight(dataset).title}</CardTitle>
+              <CardTitle className="text-base">{tr(getInsight(dataset).title)}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {getInsight(dataset).text}
+              {tr(getInsight(dataset).text)}
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {getBreakdownRows(dataset).map(([label, count]) => (
@@ -285,7 +295,7 @@ function DrillDownContent() {
                   key={label}
                   className="flex items-center justify-between rounded-lg border bg-muted/20 px-3 py-2 text-sm"
                 >
-                  <span className="truncate text-muted-foreground">{label}</span>
+                  <span className="truncate text-muted-foreground">{tr(label)}</span>
                   <Badge variant="secondary">{count}</Badge>
                 </div>
               ))}
@@ -297,7 +307,7 @@ function DrillDownContent() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              <CardTitle className="text-base">Recommended Actions</CardTitle>
+              <CardTitle className="text-base">{tr("Recommended Actions")}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -308,11 +318,11 @@ function DrillDownContent() {
                 variant="outline"
                 className="w-full justify-start"
               >
-                {action}
+                {tr(action)}
               </Button>
             ))}
             <p className="pt-2 text-xs text-muted-foreground">
-              API_REQUIRED: connect these actions to workflow endpoints.
+              {tr("API_REQUIRED: connect these actions to workflow endpoints.")}
             </p>
           </CardContent>
         </Card>
@@ -320,9 +330,9 @@ function DrillDownContent() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Supporting Records</CardTitle>
+          <CardTitle className="text-base">{tr("Supporting Records")}</CardTitle>
           <div className="space-y-1 text-xs text-muted-foreground">
-            <p>Source: {dataset.source}</p>
+            <p>{tr("Source")}: {tr(dataset.source)}</p>
             <p>API_REQUIRED: {dataset.apiRequired}</p>
           </div>
         </CardHeader>
@@ -335,7 +345,7 @@ function DrillDownContent() {
                     key={column.key}
                     className={cn(column.align === "right" && "text-right")}
                   >
-                    {column.header}
+                    {tr(column.header)}
                   </TableHead>
                 ))}
               </TableRow>
@@ -347,7 +357,7 @@ function DrillDownContent() {
                     colSpan={dataset.columns.length}
                     className="py-8 text-center text-muted-foreground"
                   >
-                    No records for this drill-down.
+                    {tr("No records for this drill-down.")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -358,7 +368,7 @@ function DrillDownContent() {
                         key={column.key}
                         className={cn(column.align === "right" && "text-right")}
                       >
-                        {row[column.key] ?? "-"}
+                        {typeof row[column.key] === "string" ? tr(String(row[column.key])) : row[column.key] ?? "-"}
                       </TableCell>
                     ))}
                   </TableRow>

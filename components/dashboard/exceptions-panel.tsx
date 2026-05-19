@@ -9,6 +9,7 @@ import { useDashboardExceptions } from "@/lib/api/hooks/use-dashboard";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { EXCEPTION_ROUTES } from "@/lib/drill-down/routes";
 import type { DashboardException } from "@/lib/api/mock/dashboard";
+import { useLocale } from "@/lib/i18n/locale";
 
 const severityConfig: Record<
   DashboardException["severity"],
@@ -36,6 +37,7 @@ const severityConfig: Record<
 
 export function ExceptionsPanel() {
   const { data: exceptions, loading, error } = useDashboardExceptions();
+  const { tr } = useLocale();
 
   if (loading) return <DataLoading />;
   if (error || !exceptions) {
@@ -49,16 +51,16 @@ export function ExceptionsPanel() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">
-            Exceptions & Alerts
+            {tr("Exceptions & Alerts")}
           </CardTitle>
           {criticalCount > 0 && (
             <Badge variant="destructive" className="text-xs">
-              {criticalCount} Critical
+              {criticalCount} {tr("Critical")}
             </Badge>
           )}
         </div>
         <p className="text-xs text-muted-foreground pt-1">
-          Click an item to drill down
+          {tr("Click an item to drill down")}
         </p>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -69,10 +71,10 @@ export function ExceptionsPanel() {
             <>
               <div className="min-w-0 flex-1 space-y-0.5">
                 <p className={cn("text-sm font-medium", config.text)}>
-                  {exception.category}
+                  {tr(exception.category)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {exception.description}
+                  {tr(exception.description)}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">

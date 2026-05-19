@@ -1,8 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MinusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockListTakeCount } from "@/lib/date/mock-list-window";
 
 interface NegativeStockItem {
   name: string;
@@ -19,15 +23,26 @@ const negativeStockItems: NegativeStockItem[] = [
 ];
 
 export function NegativeStockTable() {
+  const { tr } = useLocale();
+  const { rangeQuery } = useGlobalDateFilter();
+  const items = useMemo(
+    () =>
+      negativeStockItems.slice(
+        0,
+        mockListTakeCount(negativeStockItems.length, rangeQuery)
+      ),
+    [rangeQuery]
+  );
+
   return (
     <Card className="shadow-sm ring-2 ring-red-200">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MinusCircle className="h-4 w-4 text-red-600" />
-            <CardTitle className="text-base font-semibold text-red-700">Negative Stock</CardTitle>
+            <CardTitle className="text-base font-semibold text-red-700">{tr("Negative Stock")}</CardTitle>
           </div>
-          <Badge variant="destructive">{negativeStockItems.length} items</Badge>
+          <Badge variant="destructive">{items.length} {tr("items")}</Badge>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -35,13 +50,13 @@ export function NegativeStockTable() {
           <table className="w-full">
             <thead className="sticky top-0 bg-red-50">
               <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                <th className="px-4 py-2.5">Item</th>
-                <th className="px-4 py-2.5 text-right">Quantity</th>
-                <th className="px-4 py-2.5 text-right">Last Txn</th>
+                <th className="px-4 py-2.5">{tr("Item")}</th>
+                <th className="px-4 py-2.5 text-right">{tr("Quantity")}</th>
+                <th className="px-4 py-2.5 text-right">{tr("Last Txn")}</th>
               </tr>
             </thead>
             <tbody>
-              {negativeStockItems.map((item, index) => (
+              {items.map((item, index) => (
                 <tr
                   key={index}
                   className="border-b border-red-100 bg-red-50/30 text-sm"
@@ -49,7 +64,7 @@ export function NegativeStockTable() {
                   <td className="px-4 py-2.5">
                     <div>
                       <p className="font-medium text-foreground">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.store}</p>
+                      <p className="text-xs text-muted-foreground">{tr(item.store)}</p>
                     </div>
                   </td>
                   <td className="px-4 py-2.5 text-right">
@@ -58,7 +73,7 @@ export function NegativeStockTable() {
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right text-xs text-muted-foreground">
-                    {item.lastTransaction}
+                    {tr(item.lastTransaction)}
                   </td>
                 </tr>
               ))}

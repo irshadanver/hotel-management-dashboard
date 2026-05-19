@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart,
@@ -11,8 +12,11 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockNumericScale } from "@/lib/date/preset-multipliers";
 
-const data = [
+const BASE = [
   { store: "Main Kitchen", value: 285000, color: "oklch(0.55 0.12 250)" },
   { store: "Housekeeping", value: 198000, color: "oklch(0.60 0.12 165)" },
   { store: "Main Bar", value: 145000, color: "oklch(0.55 0.10 280)" },
@@ -22,10 +26,23 @@ const data = [
 ];
 
 export function StockValueChart() {
+  const { tr } = useLocale();
+  const { rangeQuery } = useGlobalDateFilter();
+  const m = mockNumericScale(rangeQuery);
+
+  const data = useMemo(
+    () =>
+      BASE.map((row) => ({
+        ...row,
+        value: Math.round(row.value * m),
+      })),
+    [m]
+  );
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Stock Value by Store</CardTitle>
+        <CardTitle className="text-base font-semibold">{tr("Stock Value by Store")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[280px]">
@@ -48,7 +65,7 @@ export function StockValueChart() {
                 tick={{ fontSize: 12 }}
               />
               <Tooltip
-                formatter={(value: number) => [`SAR ${value.toLocaleString()}`, "Value"]}
+                formatter={(value: number) => [`SAR ${value.toLocaleString()}`, tr("Value")]}
                 contentStyle={{
                   backgroundColor: "white",
                   border: "1px solid #e5e7eb",

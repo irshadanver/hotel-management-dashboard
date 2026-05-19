@@ -7,6 +7,7 @@ import { useDashboardDepartures } from "@/lib/api/hooks/use-dashboard";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { DetailDrawer } from "@/components/detail/detail-drawer";
 import { GuestDetailPanel } from "@/components/detail/guest-detail-panel";
+import { useLocale } from "@/lib/i18n/locale";
 
 const statusConfig = {
   "checked-out": { label: "Checked Out", variant: "default" as const },
@@ -16,6 +17,7 @@ const statusConfig = {
 
 export function DeparturesTable() {
   const { data: departures, loading, error } = useDashboardDepartures();
+  const { tr } = useLocale();
   const [guestOpen, setGuestOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<{
     guestName: string;
@@ -50,33 +52,33 @@ export function DeparturesTable() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-base font-semibold">
-                Departures Today
+                {tr("Departures Today")}
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Click a row to drill down
+                {tr("Click a row to drill down")}
               </p>
             </div>
             <Badge variant="outline" className="text-xs">
-              {departures.length} Guests
+              {departures.length} {tr("Guests")}
             </Badge>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-hidden">
-            <table className="w-full table-fixed">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[320px] table-fixed">
               <thead>
                 <tr className="border-b">
-                  <th className="w-[35%] pb-3 pr-2 text-left text-xs font-medium text-muted-foreground">
-                    Guest Name
+                  <th className="w-[32%] pb-3 pr-2 text-left text-xs font-medium text-muted-foreground">
+                    {tr("Guest Name")}
                   </th>
-                  <th className="w-[17%] px-2 pb-3 text-left text-xs font-medium text-muted-foreground">
-                    Room
+                  <th className="w-[14%] px-1 pb-3 text-left text-xs font-medium text-muted-foreground">
+                    {tr("Room")}
                   </th>
-                  <th className="w-[21%] px-2 pb-3 text-left text-xs font-medium text-muted-foreground">
-                    Balance
+                  <th className="w-[17%] pb-3 pl-1 pr-1 text-right text-xs font-medium text-muted-foreground">
+                    {tr("Balance")}
                   </th>
-                  <th className="w-[27%] pb-3 pl-2 text-left text-xs font-medium text-muted-foreground">
-                    Status
+                  <th className="w-[37%] pb-3 pl-1 text-left text-xs font-medium text-muted-foreground">
+                    {tr("Status")}
                   </th>
                 </tr>
               </thead>
@@ -114,10 +116,10 @@ export function DeparturesTable() {
                       <td className="py-3 pr-2 text-sm font-medium">
                         <span className="block truncate">{departure.guestName}</span>
                       </td>
-                      <td className="px-2 py-3 text-sm text-muted-foreground">
+                      <td className="px-1 py-3 text-sm text-muted-foreground">
                         {departure.room}
                       </td>
-                      <td className="px-2 py-3 text-sm">
+                      <td className="py-3 pl-1 pr-1 text-right text-sm tabular-nums">
                         <span
                           className={
                             departure.balance > 0
@@ -128,9 +130,9 @@ export function DeparturesTable() {
                           SAR {departure.balance.toLocaleString()}
                         </span>
                       </td>
-                      <td className="py-3 pl-2">
+                      <td className="py-3 pl-1">
                         <Badge variant={config.variant} className="whitespace-nowrap text-[11px]">
-                          {config.label}
+                          {tr(config.label)}
                         </Badge>
                       </td>
                     </tr>
@@ -145,8 +147,8 @@ export function DeparturesTable() {
       <DetailDrawer
         open={guestOpen}
         onOpenChange={setGuestOpen}
-        title="Departure details"
-        description="Guest drill-down"
+        title={tr("Departure details")}
+        description={tr("Guest drill-down")}
       >
         {selectedGuest && (
           <GuestDetailPanel

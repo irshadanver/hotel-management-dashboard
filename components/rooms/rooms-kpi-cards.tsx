@@ -13,7 +13,9 @@ import { useRoomsKPIs } from "@/lib/api/hooks/use-rooms";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { DrillDownCard } from "@/components/shared/drill-down-card";
 import { ROOMS_KPI_ROUTES } from "@/lib/drill-down/routes";
+import { withDrillDateContext } from "@/lib/drill-down/query-params";
 import type { RoomFilters } from "@/lib/api/mock/rooms";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface RoomKPICardProps {
   title: string;
@@ -24,6 +26,8 @@ interface RoomKPICardProps {
 }
 
 function RoomKPICard({ title, value, subtitle, icon, color }: RoomKPICardProps) {
+  const { tr } = useLocale();
+
   return (
     <Card className="h-full shadow-sm">
       <CardContent className="flex h-full min-h-[132px] flex-col gap-2.5 p-5">
@@ -35,7 +39,7 @@ function RoomKPICard({ title, value, subtitle, icon, color }: RoomKPICardProps) 
             {icon}
           </div>
           <p className="min-w-0 text-sm font-medium leading-snug text-muted-foreground">
-            {title}
+            {tr(title)}
           </p>
         </div>
 
@@ -44,7 +48,7 @@ function RoomKPICard({ title, value, subtitle, icon, color }: RoomKPICardProps) 
         </p>
 
         <div className="min-h-4 text-xs">
-          {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="text-muted-foreground">{tr(subtitle)}</p>}
         </div>
       </CardContent>
     </Card>
@@ -66,6 +70,7 @@ interface RoomsKPICardsProps {
 
 export function RoomsKPICards({ filters }: RoomsKPICardsProps) {
   const { data: kpis, loading, error } = useRoomsKPIs(filters);
+  const { tr } = useLocale();
 
   if (loading) return <DataLoading />;
   if (error || !kpis) {
@@ -75,7 +80,13 @@ export function RoomsKPICards({ filters }: RoomsKPICardsProps) {
   return (
     <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {kpis.map((kpi) => {
-        const href = ROOMS_KPI_ROUTES[kpi.title];
+        const baseHref = ROOMS_KPI_ROUTES[kpi.title];
+        const href = baseHref
+          ? withDrillDateContext(baseHref, "rooms", {
+              roomsDate: filters?.date,
+              roomType: filters?.roomType,
+            })
+          : undefined;
         const card = (
           <RoomKPICard
             key={kpi.title}
@@ -90,7 +101,7 @@ export function RoomsKPICards({ filters }: RoomsKPICardsProps) {
           <DrillDownCard
             key={kpi.title}
             href={href}
-            ariaLabel={`Drill down: ${kpi.title}`}
+            ariaLabel={`${tr("Drill down")}: ${tr(kpi.title)}`}
             className="h-full"
           >
             {card}

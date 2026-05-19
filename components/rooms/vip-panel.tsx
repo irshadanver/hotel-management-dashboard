@@ -6,6 +6,7 @@ import { Star, Gift, AlertCircle, Cake } from "lucide-react";
 import { useVIPGuests } from "@/lib/api/hooks/use-rooms";
 import type { RoomFilters } from "@/lib/api/mock/rooms";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useLocale } from "@/lib/i18n/locale";
 
 const tierStyles = {
   gold: "bg-amber-100 text-amber-700",
@@ -30,6 +31,7 @@ interface VIPPanelProps {
 
 export function VIPPanel({ filters }: VIPPanelProps) {
   const { data: vipGuests, loading, error } = useVIPGuests(filters);
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -58,11 +60,11 @@ export function VIPPanel({ filters }: VIPPanelProps) {
           <div className="flex items-center gap-2">
             <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
             <CardTitle className="text-base font-semibold">
-              VIP Guests & Special Requests
+              {tr("VIP Guests & Special Requests")}
             </CardTitle>
           </div>
           <Badge variant="secondary" className="font-normal">
-            {vipGuests.length} guests
+            {vipGuests.length} {tr("guests")}
           </Badge>
         </div>
       </CardHeader>
@@ -87,11 +89,11 @@ export function VIPPanel({ filters }: VIPPanelProps) {
                         <Badge
                           className={`${tierStyles[guest.tier]} border-0 text-[10px] font-medium uppercase`}
                         >
-                          {guest.tier}
+                          {tr(guest.tier)}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>Room {guest.roomNumber}</span>
+                        <span>{tr("Room")} {guest.roomNumber}</span>
                         <span>·</span>
                         <span
                           className={
@@ -101,8 +103,8 @@ export function VIPPanel({ filters }: VIPPanelProps) {
                           }
                         >
                           {guest.checkIn === "May 14"
-                            ? "Arriving"
-                            : "In-House"}
+                            ? tr("Arriving")
+                            : tr("In-House")}
                         </span>
                       </div>
                     </div>
@@ -115,7 +117,7 @@ export function VIPPanel({ filters }: VIPPanelProps) {
                       className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
                     >
                       {getRequestIcon(request)}
-                      {request}
+                      {tr(request)}
                     </span>
                   ))}
                 </div>

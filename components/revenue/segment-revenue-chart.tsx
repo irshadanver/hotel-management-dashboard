@@ -12,6 +12,7 @@ import {
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useSegmentRevenue } from "@/lib/api/hooks/use-revenue";
 import type { RevenueFilters } from "@/lib/api/mock/revenue";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface SegmentRevenueChartProps {
   filters?: RevenueFilters;
@@ -19,6 +20,7 @@ interface SegmentRevenueChartProps {
 
 export function SegmentRevenueChart({ filters }: SegmentRevenueChartProps) {
   const { data, loading, error } = useSegmentRevenue(filters);
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -44,7 +46,7 @@ export function SegmentRevenueChart({ filters }: SegmentRevenueChartProps) {
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
-          Revenue by Segment
+          {tr("Revenue by Segment")}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -77,7 +79,7 @@ export function SegmentRevenueChart({ filters }: SegmentRevenueChartProps) {
                 }}
                 formatter={(value: number) => [
                   `SAR ${value.toLocaleString()}`,
-                  "Revenue",
+                  tr("Revenue"),
                 ]}
               />
               <Bar

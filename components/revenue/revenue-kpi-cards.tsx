@@ -10,9 +10,11 @@ import {
 } from "lucide-react";
 import { DrillDownCard } from "@/components/shared/drill-down-card";
 import { REVENUE_KPI_ROUTES } from "@/lib/drill-down/routes";
+import { withDrillDateContext } from "@/lib/drill-down/query-params";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useRevenueKPIs } from "@/lib/api/hooks/use-revenue";
 import type { RevenueFilters } from "@/lib/api/mock/revenue";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface RevenueKPICardProps {
   title: string;
@@ -34,6 +36,8 @@ function RevenueKPICard({
   color,
   trend,
 }: RevenueKPICardProps) {
+  const { tr } = useLocale();
+
   return (
     <Card className="h-full shadow-sm">
       <CardContent className="flex h-full min-h-[132px] flex-col justify-between gap-3 p-5">
@@ -45,7 +49,7 @@ function RevenueKPICard({
             {icon}
           </div>
           <p className="min-w-0 text-sm font-medium leading-snug text-muted-foreground">
-            {title}
+            {tr(title)}
           </p>
         </div>
 
@@ -54,7 +58,7 @@ function RevenueKPICard({
         </p>
 
         <div className="flex min-h-4 flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-          {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="text-muted-foreground">{tr(subtitle)}</p>}
           {trend && (
             <span
               className={`font-medium ${
@@ -100,6 +104,7 @@ interface RevenueKPICardsProps {
 
 export function RevenueKPICards({ filters }: RevenueKPICardsProps) {
   const { data: kpis, loading, error } = useRevenueKPIs(filters);
+  const { tr } = useLocale();
 
   if (loading) return <DataLoading label="Loading revenue KPIs..." />;
   if (error || !kpis) {
@@ -109,7 +114,13 @@ export function RevenueKPICards({ filters }: RevenueKPICardsProps) {
   return (
     <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {kpis.map((kpi) => {
-        const href = REVENUE_KPI_ROUTES[kpi.title];
+        const baseHref = REVENUE_KPI_ROUTES[kpi.title];
+        const href = baseHref
+          ? withDrillDateContext(baseHref, "revenue", {
+              revRange: filters?.range,
+              revSegment: filters?.segment,
+            })
+          : undefined;
         const visual = kpiVisuals[kpi.title] ?? kpiVisuals["Room Revenue Forecast"];
         const card = <RevenueKPICard key={kpi.title} {...kpi} {...visual} />;
 
@@ -117,7 +128,7 @@ export function RevenueKPICards({ filters }: RevenueKPICardsProps) {
           <DrillDownCard
             key={kpi.title}
             href={href}
-            ariaLabel={`Drill down: ${kpi.title}`}
+            ariaLabel={`${tr("Drill down")}: ${tr(kpi.title)}`}
             className="h-full"
           >
             {card}

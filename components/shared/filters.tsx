@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/locale";
 
 // Individual filter components
 export interface FilterOption {
@@ -34,16 +35,18 @@ export function SelectFilter({
   icon,
   className,
 }: SelectFilterProps) {
+  const { tr } = useLocale();
+
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className={cn("w-[160px]", className)}>
         {icon && <span className="mr-2">{icon}</span>}
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={tr(placeholder)} />
       </SelectTrigger>
       <SelectContent>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {tr(option.label)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -97,6 +100,8 @@ export function RefreshButton({
   loading = false,
   className,
 }: RefreshButtonProps) {
+  const { tr } = useLocale();
+
   return (
     <Button
       variant="outline"
@@ -106,7 +111,7 @@ export function RefreshButton({
       disabled={loading}
     >
       <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-      Refresh
+      {tr("Refresh")}
     </Button>
   );
 }

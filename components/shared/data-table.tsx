@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/locale";
 
 export type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -41,6 +42,8 @@ export function DataTable<T>({
   className,
   compact = false,
 }: DataTableProps<T>) {
+  const { tr } = useLocale();
+
   const getRowKey = (row: T, index: number): string => {
     if (typeof rowKey === "function") {
       return rowKey(row);
@@ -66,9 +69,9 @@ export function DataTable<T>({
               {icon}
               {title && (
                 <div>
-                  <CardTitle className="text-base font-semibold">{title}</CardTitle>
+                  <CardTitle className="text-base font-semibold">{tr(title)}</CardTitle>
                   {subtitle && (
-                    <p className="text-xs text-muted-foreground">{subtitle}</p>
+                    <p className="text-xs text-muted-foreground">{tr(subtitle)}</p>
                   )}
                 </div>
               )}
@@ -94,7 +97,7 @@ export function DataTable<T>({
                     )}
                     style={col.width ? { width: col.width } : undefined}
                   >
-                    {col.header}
+                    {tr(col.header)}
                   </th>
                 ))}
               </tr>
@@ -106,7 +109,7 @@ export function DataTable<T>({
                     colSpan={columns.length}
                     className="px-4 py-8 text-center text-muted-foreground"
                   >
-                    {emptyMessage}
+                    {tr(emptyMessage)}
                   </td>
                 </tr>
               ) : (
@@ -161,9 +164,11 @@ export function StatusBadge({
   className?: string;
 }) {
   const statusConfig = config[status] ?? { label: status, variant: "outline" as const };
+  const { tr } = useLocale();
+
   return (
     <Badge variant={statusConfig.variant} className={cn("text-[10px]", className)}>
-      {statusConfig.label}
+      {tr(statusConfig.label)}
     </Badge>
   );
 }

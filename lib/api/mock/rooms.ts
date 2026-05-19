@@ -259,15 +259,26 @@ export function getFilteredVIPGuests(filters?: RoomFilters): VIPGuest[] {
   });
 }
 
-export const mockRoomsOccupancyTrend: TimeSeriesDataPoint[] = [
-  { date: "Mon", occupancy: 72 },
-  { date: "Tue", occupancy: 75 },
-  { date: "Wed", occupancy: 78 },
-  { date: "Thu", occupancy: 82 },
-  { date: "Fri", occupancy: 88 },
-  { date: "Sat", occupancy: 92 },
-  { date: "Sun", occupancy: 85 },
+/** Next 14 days — forecast vs confirmed pick-up (Rooms occupancy chart). */
+export const mockRoomsOccupancyForecast14: TimeSeriesDataPoint[] = [
+  { date: "May 19", forecast: 82, confirmed: 76, occupancy: 76 },
+  { date: "May 20", forecast: 84, confirmed: 78, occupancy: 78 },
+  { date: "May 21", forecast: 86, confirmed: 80, occupancy: 80 },
+  { date: "May 22", forecast: 88, confirmed: 81, occupancy: 81 },
+  { date: "May 23", forecast: 90, confirmed: 83, occupancy: 83 },
+  { date: "May 24", forecast: 89, confirmed: 84, occupancy: 84 },
+  { date: "May 25", forecast: 87, confirmed: 82, occupancy: 82 },
+  { date: "May 26", forecast: 85, confirmed: 80, occupancy: 80 },
+  { date: "May 27", forecast: 83, confirmed: 78, occupancy: 78 },
+  { date: "May 28", forecast: 81, confirmed: 76, occupancy: 76 },
+  { date: "May 29", forecast: 80, confirmed: 75, occupancy: 75 },
+  { date: "May 30", forecast: 82, confirmed: 77, occupancy: 77 },
+  { date: "May 31", forecast: 85, confirmed: 80, occupancy: 80 },
+  { date: "Jun 1", forecast: 88, confirmed: 83, occupancy: 83 },
 ];
+
+/** @deprecated Use mockRoomsOccupancyForecast14 */
+export const mockRoomsOccupancyTrend = mockRoomsOccupancyForecast14;
 
 export function getFilteredRoomsOccupancyTrend(filters?: RoomFilters) {
   const { date, roomType } = normalizeFilters(filters);
@@ -277,13 +288,20 @@ export function getFilteredRoomsOccupancyTrend(filters?: RoomFilters) {
       : { standard: -4, deluxe: 1, suite: 3, executive: 5 }[roomType] ?? 0;
   const dateFactor = { yesterday: -3, today: 0, tomorrow: 2 }[date] ?? 0;
 
-  return mockRoomsOccupancyTrend.map((point) => ({
-    ...point,
-    occupancy: Math.max(
-      0,
-      Math.min(100, Number(point.occupancy) + typeFactor + dateFactor)
-    ),
-  }));
+  const clampPct = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
+
+  return mockRoomsOccupancyForecast14.map((point) => {
+    const f = clampPct(Number(point.forecast) + typeFactor + dateFactor);
+    const c = clampPct(
+      Number(point.confirmed) + typeFactor + dateFactor - (date === "tomorrow" ? -1 : 0)
+    );
+    return {
+      ...point,
+      forecast: f,
+      confirmed: c,
+      occupancy: c,
+    };
+  });
 }
 
 export function getFilteredRoomsKPIs(filters?: RoomFilters): RoomKPI[] {

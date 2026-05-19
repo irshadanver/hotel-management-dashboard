@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useTopAccounts } from "@/lib/api/hooks/use-revenue";
 import type { RevenueFilters, TopAccountRow } from "@/lib/api/mock/revenue";
+import { useLocale } from "@/lib/i18n/locale";
 
 type SortKey = keyof Pick<TopAccountRow, "company" | "nights" | "revenue" | "adr">;
 type SortDirection = "asc" | "desc";
@@ -38,6 +39,8 @@ function SortHeader({
   onSort: (key: SortKey) => void;
   align?: "left" | "center";
 }) {
+  const { tr } = useLocale();
+
   return (
     <Button
       type="button"
@@ -48,10 +51,10 @@ function SortHeader({
         align === "left" ? "text-left" : "mx-auto text-center"
       }`}
     >
-      <span className="truncate">{label}</span>
+      <span className="truncate">{tr(label)}</span>
       <ArrowDownUp className="h-3 w-3" />
       <span className="text-[10px] leading-none">
-        {activeKey === sortKey ? (direction === "asc" ? "ASC" : "DESC") : ""}
+        {activeKey === sortKey ? tr(direction === "asc" ? "ASC" : "DESC") : ""}
       </span>
     </Button>
   );
@@ -59,6 +62,7 @@ function SortHeader({
 
 export function TopAccountsTable({ filters }: TopAccountsTableProps) {
   const { data: accounts, loading, error } = useTopAccounts(filters);
+  const { tr } = useLocale();
   const [sortKey, setSortKey] = useState<SortKey>("revenue");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -110,7 +114,7 @@ export function TopAccountsTable({ filters }: TopAccountsTableProps) {
         <div className="flex items-center gap-2">
           <Building2 className="h-5 w-5 text-muted-foreground" />
           <CardTitle className="text-base font-semibold">
-            Top Corporate Accounts
+            {tr("Top Corporate Accounts")}
           </CardTitle>
         </div>
       </CardHeader>

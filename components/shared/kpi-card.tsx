@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/locale";
 
 export interface KPICardProps {
   title: string;
@@ -28,6 +29,8 @@ export function KPICard({
   alert = false,
   className,
 }: KPICardProps) {
+  const { tr } = useLocale();
+
   return (
     <Card className={cn("h-full shadow-sm", className)}>
       <CardContent className="flex h-full min-h-[132px] flex-col justify-between gap-3 p-5">
@@ -42,7 +45,7 @@ export function KPICard({
             {icon}
           </div>
           <p className="min-w-0 text-sm font-medium leading-snug text-muted-foreground">
-            {title}
+            {tr(title)}
           </p>
         </div>
 
@@ -51,7 +54,7 @@ export function KPICard({
         </p>
 
         <div className="flex min-h-4 flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-          {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="text-muted-foreground">{tr(subtitle)}</p>}
           {trend && (
             <span
               className={cn(

@@ -19,6 +19,7 @@ import {
   Legend,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/locale";
 
 // Common chart wrapper
 interface ChartCardProps {
@@ -38,12 +39,14 @@ export function ChartCard({
   className,
   height = 280,
 }: ChartCardProps) {
+  const { tr } = useLocale();
+
   return (
     <Card className={cn("shadow-sm", className)}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        <CardTitle className="text-base font-semibold">{tr(title)}</CardTitle>
         {subtitle && (
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
+          <p className="text-xs text-muted-foreground">{tr(subtitle)}</p>
         )}
       </CardHeader>
       <CardContent>
@@ -66,13 +69,15 @@ interface LegendItemProps {
 }
 
 export function LegendItem({ color, label, dashed }: LegendItemProps) {
+  const { tr } = useLocale();
+
   return (
     <div className="flex items-center gap-2">
       <div
         className={cn("h-2.5 w-2.5 rounded-sm", dashed && "border-2 border-dashed bg-transparent")}
         style={dashed ? { borderColor: color } : { backgroundColor: color }}
       />
-      <span className="text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground">{tr(label)}</span>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n/locale";
 import type { BadgeVariant } from "./data-table";
 
 // Panel card wrapper for side panels
@@ -32,6 +33,8 @@ export function PanelCard({
   maxHeight = "400px",
   className,
 }: PanelCardProps) {
+  const { tr } = useLocale();
+
   return (
     <Card className={cn("flex min-h-0 flex-col shadow-sm", className)}>
       <CardHeader className="pb-3">
@@ -40,15 +43,15 @@ export function PanelCard({
             {icon}
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className="text-base font-semibold">{title}</CardTitle>
+                <CardTitle className="text-base font-semibold">{tr(title)}</CardTitle>
                 {badge && (
                   <Badge variant={badge.variant || "secondary"} className="text-xs">
-                    {badge.value}
+                    {typeof badge.value === "string" ? tr(badge.value) : badge.value}
                   </Badge>
                 )}
               </div>
               {subtitle && (
-                <p className="text-xs text-muted-foreground">{subtitle}</p>
+                <p className="text-xs text-muted-foreground">{tr(subtitle)}</p>
               )}
             </div>
           </div>
@@ -94,42 +97,50 @@ export function PanelListItem({
   action,
   className,
 }: PanelListItemProps) {
-  const highlightClasses = {
-    warning: "bg-amber-50 border-l-2 border-l-amber-500",
-    critical: "bg-red-50 border-l-2 border-l-red-500",
-    success: "bg-emerald-50 border-l-2 border-l-emerald-500",
+  const { tr } = useLocale();
+  const highlightStyles = {
+    warning: { className: "bg-amber-50", borderColor: "#f59e0b" },
+    critical: { className: "bg-red-50", borderColor: "#ef4444" },
+    success: { className: "bg-emerald-50", borderColor: "#10b981" },
   };
+  const highlightStyle = highlight ? highlightStyles[highlight] : undefined;
 
   return (
     <div
       className={cn(
         "flex items-center justify-between rounded-lg border px-3 py-2.5",
-        highlight && highlightClasses[highlight],
-        leftBorder && "border-l-2",
+        highlightStyle?.className,
+        (highlightStyle || leftBorder) && "[border-inline-start-width:2px]",
         className
       )}
-      style={leftBorder && !highlight ? { borderLeftColor: leftBorder } : undefined}
+      style={
+        highlightStyle || leftBorder
+          ? { borderInlineStartColor: highlightStyle?.borderColor ?? leftBorder }
+          : undefined
+      }
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="font-medium text-sm truncate">{title}</p>
+          <p className="font-medium text-sm truncate">{tr(title)}</p>
           {badge && (
             <Badge variant={badge.variant || "outline"} className="text-[10px]">
-              {badge.label}
+              {tr(badge.label)}
             </Badge>
           )}
         </div>
         {subtitle && (
-          <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+          <p className="text-xs text-muted-foreground truncate">{tr(subtitle)}</p>
         )}
       </div>
-      <div className="flex items-center gap-2 ml-3 shrink-0">
+      <div className="ms-3 flex shrink-0 items-center gap-2">
         {value && (
-          <span className="text-sm font-medium">{value}</span>
+          <span className="text-sm font-medium">
+            {typeof value === "string" ? tr(value) : value}
+          </span>
         )}
         {status && (
           <Badge variant={status.variant || "secondary"} className="text-[10px]">
-            {status.label}
+            {tr(status.label)}
           </Badge>
         )}
         {action}
@@ -191,9 +202,9 @@ interface AlertItemProps {
 }
 
 const severityConfig = {
-  critical: { variant: "destructive" as const, bgClass: "bg-red-50 border-l-red-500" },
-  warning: { variant: "secondary" as const, bgClass: "bg-amber-50 border-l-amber-500" },
-  info: { variant: "outline" as const, bgClass: "bg-blue-50 border-l-blue-500" },
+  critical: { variant: "destructive" as const, bgClass: "bg-red-50", borderColor: "#ef4444" },
+  warning: { variant: "secondary" as const, bgClass: "bg-amber-50", borderColor: "#f59e0b" },
+  info: { variant: "outline" as const, bgClass: "bg-blue-50", borderColor: "#3b82f6" },
 };
 
 export function AlertItem({
@@ -205,32 +216,34 @@ export function AlertItem({
   action,
 }: AlertItemProps) {
   const config = severityConfig[severity];
+  const { tr } = useLocale();
   
   return (
     <div
       className={cn(
-        "flex items-start justify-between rounded-lg border border-l-2 p-3",
+        "flex items-start justify-between rounded-lg border p-3 [border-inline-start-width:2px]",
         config.bgClass
       )}
+      style={{ borderInlineStartColor: config.borderColor }}
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <Badge variant={config.variant} className="text-[10px]">
-            {severity.charAt(0).toUpperCase() + severity.slice(1)}
+            {tr(severity.charAt(0).toUpperCase() + severity.slice(1))}
           </Badge>
-          <span className="font-medium text-sm">{type}</span>
+          <span className="font-medium text-sm">{tr(type)}</span>
           {count !== undefined && (
             <Badge variant="outline" className="text-[10px]">
               {count}
             </Badge>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        <p className="text-xs text-muted-foreground mt-1">{tr(description)}</p>
         {timestamp && (
           <p className="text-[10px] text-muted-foreground mt-1">{timestamp}</p>
         )}
       </div>
-      {action && <div className="ml-3 shrink-0">{action}</div>}
+      {action && <div className="ms-3 shrink-0">{action}</div>}
     </div>
   );
 }

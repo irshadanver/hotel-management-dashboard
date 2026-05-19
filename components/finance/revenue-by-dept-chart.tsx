@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -10,8 +11,11 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard, LegendItem, chartColors } from "@/components/shared";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockNumericScale } from "@/lib/date/preset-multipliers";
 
-const data = [
+const BASE = [
   { department: "Rooms", revenue: 86500, budget: 82000 },
   { department: "F&B", revenue: 18450, budget: 20000 },
   { department: "Banquet", revenue: 12800, budget: 15000 },
@@ -20,6 +24,20 @@ const data = [
 ];
 
 export function RevenueByDeptChart() {
+  const { tr } = useLocale();
+  const { rangeQuery } = useGlobalDateFilter();
+  const m = mockNumericScale(rangeQuery);
+
+  const data = useMemo(
+    () =>
+      BASE.map((row) => ({
+        ...row,
+        revenue: Math.round(row.revenue * m),
+        budget: Math.round(row.budget * (0.97 + 0.03 * m)),
+      })),
+    [m]
+  );
+
   const formatValue = (value: number) => `${(value / 1000).toFixed(0)}K`;
 
   return (
@@ -60,7 +78,7 @@ export function RevenueByDeptChart() {
           <Tooltip
             formatter={(value: number, name: string) => [
               `SAR ${value.toLocaleString()}`,
-              name === "revenue" ? "Actual" : "Budget",
+              name === "revenue" ? tr("Actual") : tr("Budget"),
             ]}
             contentStyle={{
               backgroundColor: "white",
@@ -72,14 +90,14 @@ export function RevenueByDeptChart() {
           <Bar
             dataKey="revenue"
             fill={chartColors.success}
-            name="Actual"
+            name={tr("Actual")}
             radius={[0, 4, 4, 0]}
             barSize={14}
           />
           <Bar
             dataKey="budget"
             fill={chartColors.muted}
-            name="Budget"
+            name={tr("Budget")}
             radius={[0, 4, 4, 0]}
             barSize={14}
           />

@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowDownUp, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockNumericScale } from "@/lib/date/preset-multipliers";
 
 interface Payable {
   vendor: string;
@@ -57,6 +60,8 @@ function SortHeader({
   onSort: (key: SortKey) => void;
   align?: "left" | "center" | "right";
 }) {
+  const { tr } = useLocale();
+
   return (
     <Button
       type="button"
@@ -71,10 +76,10 @@ function SortHeader({
             : "text-left"
       }`}
     >
-      <span className="truncate">{label}</span>
+      <span className="truncate">{tr(label)}</span>
       <ArrowDownUp className="h-3 w-3" />
       <span className="text-[10px] leading-none">
-        {activeKey === sortKey ? (direction === "asc" ? "ASC" : "DESC") : ""}
+        {activeKey === sortKey ? tr(direction === "asc" ? "ASC" : "DESC") : ""}
       </span>
     </Button>
   );
@@ -83,9 +88,21 @@ function SortHeader({
 export function PayablesDueTable() {
   const [sortKey, setSortKey] = useState<SortKey>("duePeriod");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const { tr } = useLocale();
+  const { rangeQuery } = useGlobalDateFilter();
+  const m = mockNumericScale(rangeQuery);
+
+  const scaledPayables = useMemo(
+    () =>
+      payables.map((p) => ({
+        ...p,
+        amount: Math.round(p.amount * m),
+      })),
+    [m]
+  );
 
   const sortedPayables = useMemo(() => {
-    return [...payables].sort((a, b) => {
+    return [...scaledPayables].sort((a, b) => {
       let result: number;
 
       if (sortKey === "duePeriod") {
@@ -98,7 +115,7 @@ export function PayablesDueTable() {
 
       return sortDirection === "asc" ? result : -result;
     });
-  }, [sortDirection, sortKey]);
+  }, [sortDirection, sortKey, scaledPayables]);
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -111,9 +128,9 @@ export function PayablesDueTable() {
   };
 
   const groupedPayables = {
-    "7days": payables.filter((p) => p.duePeriod === "7days"),
-    "15days": payables.filter((p) => p.duePeriod === "15days"),
-    "30days": payables.filter((p) => p.duePeriod === "30days"),
+    "7days": scaledPayables.filter((p) => p.duePeriod === "7days"),
+    "15days": scaledPayables.filter((p) => p.duePeriod === "15days"),
+    "30days": scaledPayables.filter((p) => p.duePeriod === "30days"),
   };
 
   const totals = {
@@ -128,7 +145,7 @@ export function PayablesDueTable() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
-            <CardTitle className="text-base font-semibold">Payables Due</CardTitle>
+            <CardTitle className="text-base font-semibold">{tr("Payables Due")}</CardTitle>
           </div>
         </div>
         <div className="mt-2 flex gap-4">
@@ -140,7 +157,7 @@ export function PayablesDueTable() {
                   className="h-2.5 w-2.5 rounded-full"
                   style={{ backgroundColor: config.color }}
                 />
-                <span className="text-xs text-muted-foreground">{config.label}:</span>
+                <span className="text-xs text-muted-foreground">{tr(config.label)}:</span>
                 <span className="text-xs font-semibold">SAR {totals[period].toLocaleString()}</span>
               </div>
             );
@@ -173,7 +190,7 @@ export function PayablesDueTable() {
                   <tr key={index} className="hover:bg-muted/20">
                     <td className="px-4 py-3">
                       <p className="font-medium">{payable.vendor}</p>
-                      <p className="text-[10px] text-muted-foreground">{payable.invoiceCount} invoice(s)</p>
+                      <p className="text-[10px] text-muted-foreground">{payable.invoiceCount} {tr("invoice(s)")}</p>
                     </td>
                     <td className="px-4 py-3 text-right font-semibold">
                       SAR {payable.amount.toLocaleString()}
@@ -185,7 +202,7 @@ export function PayablesDueTable() {
                         className="text-[10px] border-0"
                         style={{ backgroundColor: `${config.color}20`, color: config.color }}
                       >
-                        {config.label}
+                        {tr(config.label)}
                       </Badge>
                     </td>
                   </tr>

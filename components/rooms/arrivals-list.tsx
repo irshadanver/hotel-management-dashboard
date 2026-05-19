@@ -6,6 +6,7 @@ import { Clock, Star } from "lucide-react";
 import { useRoomArrivals } from "@/lib/api/hooks/use-rooms";
 import type { RoomFilters } from "@/lib/api/mock/rooms";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useLocale } from "@/lib/i18n/locale";
 
 const statusStyles = {
   expected: "bg-amber-100 text-amber-700",
@@ -19,6 +20,7 @@ interface ArrivalsListProps {
 
 export function ArrivalsList({ filters }: ArrivalsListProps) {
   const { data: arrivals, loading, error } = useRoomArrivals(filters);
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -45,10 +47,10 @@ export function ArrivalsList({ filters }: ArrivalsListProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">
-            Arrivals Today
+            {tr("Arrivals Today")}
           </CardTitle>
           <Badge variant="secondary" className="font-normal">
-            {arrivals.length} guests
+            {arrivals.length} {tr("guests")}
           </Badge>
         </div>
       </CardHeader>
@@ -79,7 +81,7 @@ export function ArrivalsList({ filters }: ArrivalsListProps) {
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span>{arrival.roomNumber}</span>
                       <span>·</span>
-                      <span>{arrival.roomType}</span>
+                      <span>{tr(arrival.roomType)}</span>
                     </div>
                   </div>
                 </div>
@@ -92,10 +94,10 @@ export function ArrivalsList({ filters }: ArrivalsListProps) {
                     className={`${statusStyles[arrival.status]} border-0 text-xs font-medium`}
                   >
                     {arrival.status === "checked-in"
-                      ? "Checked In"
+                      ? tr("Checked In")
                       : arrival.status === "delayed"
-                        ? "Delayed"
-                        : "Expected"}
+                        ? tr("Delayed")
+                        : tr("Expected")}
                   </Badge>
                 </div>
               </div>

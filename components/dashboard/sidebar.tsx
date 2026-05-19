@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getActiveAlertCount } from "@/lib/api";
-
-const alertBadgeCount = getActiveAlertCount();
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface SidebarProps {
   activeItem: string;
@@ -40,10 +40,15 @@ export function Sidebar({
   collapsed,
   onCollapsedChange,
 }: SidebarProps) {
+  const { isRTL, t } = useLocale();
+  const { rangeQuery } = useGlobalDateFilter();
+  const alertBadgeCount = getActiveAlertCount(rangeQuery);
+
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col bg-sidebar text-sidebar-foreground transition-all duration-300",
+        "fixed top-0 z-40 flex h-screen flex-col bg-sidebar text-sidebar-foreground transition-all duration-300",
+        isRTL ? "right-0" : "left-0",
         collapsed ? "w-16" : "w-60"
       )}
     >
@@ -95,7 +100,9 @@ export function Sidebar({
               <Icon className="h-5 w-5 shrink-0" />
               {!collapsed && (
                 <>
-                  <span className="flex-1 text-left">{item.label}</span>
+                  <span className="flex-1 text-start">
+                    {t.nav[item.id as keyof typeof t.nav] ?? item.label}
+                  </span>
                   {badge && (
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-white">
                       {badge}
@@ -104,7 +111,12 @@ export function Sidebar({
                 </>
               )}
               {collapsed && badge && (
-                <span className="absolute left-10 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-white">
+                <span
+                  className={cn(
+                    "absolute top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-white",
+                    isRTL ? "right-10" : "left-10"
+                  )}
+                >
                   {badge}
                 </span>
               )}
@@ -120,11 +132,19 @@ export function Sidebar({
           className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
         >
           {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
+            isRTL ? (
+              <ChevronLeft className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )
           ) : (
             <>
-              <ChevronLeft className="h-4 w-4" />
-              <span>Collapse</span>
+              {isRTL ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+              <span>{t.collapse}</span>
             </>
           )}
         </button>

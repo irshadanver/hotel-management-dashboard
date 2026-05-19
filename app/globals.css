@@ -95,8 +95,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback', system-ui, sans-serif;
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
+  --font-sans: var(--font-geist), var(--font-arabic), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -146,5 +146,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  [dir="rtl"] body {
+    font-family: var(--font-arabic), var(--font-geist), system-ui, sans-serif;
+  }
+
+  [dir="rtl"] .recharts-wrapper,
+  [dir="rtl"] .recharts-surface {
+    direction: ltr;
   }
 }

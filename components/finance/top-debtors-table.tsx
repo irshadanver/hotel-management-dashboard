@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Users } from "lucide-react";
 import {
   DataTable,
@@ -8,6 +9,8 @@ import {
   type TableColumn,
   type StatusConfig,
 } from "@/components/shared";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockNumericScale } from "@/lib/date/preset-multipliers";
 
 interface Debtor {
   rank: number;
@@ -79,7 +82,19 @@ const columns: TableColumn<Debtor>[] = [
 ];
 
 export function TopDebtorsTable() {
-  const totalOutstanding = debtors.reduce((sum, d) => sum + d.outstanding, 0);
+  const { rangeQuery } = useGlobalDateFilter();
+  const m = mockNumericScale(rangeQuery);
+  const scaledDebtors = useMemo(
+    () =>
+      debtors.map((d) => ({
+        ...d,
+        outstanding: Math.round(d.outstanding * m),
+        invoices: Math.max(1, Math.round(d.invoices * (0.9 + 0.1 * m))),
+        oldestDays: Math.max(1, Math.round(d.oldestDays * (0.95 + 0.05 * m))),
+      })),
+    [m]
+  );
+  const totalOutstanding = scaledDebtors.reduce((sum, d) => sum + d.outstanding, 0);
 
   return (
     <DataTable
@@ -89,7 +104,7 @@ export function TopDebtorsTable() {
         <p className="text-sm font-semibold">{formatCurrency(totalOutstanding)}</p>
       }
       columns={columns}
-      data={debtors}
+      data={scaledDebtors}
       rowKey="rank"
     />
   );

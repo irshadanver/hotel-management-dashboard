@@ -14,6 +14,7 @@ import {
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useMealPeriods } from "@/lib/api/hooks/use-fnb";
 import type { FnBFilters } from "@/lib/api/mock/fnb";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface MealPeriodChartProps {
   filters?: FnBFilters;
@@ -21,6 +22,7 @@ interface MealPeriodChartProps {
 
 export function MealPeriodChart({ filters }: MealPeriodChartProps) {
   const { data, loading, error } = useMealPeriods(filters);
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -45,7 +47,7 @@ export function MealPeriodChart({ filters }: MealPeriodChartProps) {
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Sales by Meal Period</CardTitle>
+        <CardTitle className="text-base font-semibold">{tr("Sales by Meal Period")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[280px]">
@@ -71,7 +73,7 @@ export function MealPeriodChart({ filters }: MealPeriodChartProps) {
               <Tooltip
                 formatter={(value: number, name: string) => [
                   `SAR ${value.toLocaleString()}`,
-                  name.charAt(0).toUpperCase() + name.slice(1),
+                  tr(name.charAt(0).toUpperCase() + name.slice(1)),
                 ]}
                 contentStyle={{
                   backgroundColor: "white",
@@ -82,7 +84,7 @@ export function MealPeriodChart({ filters }: MealPeriodChartProps) {
               />
               <Legend 
                 wrapperStyle={{ fontSize: "12px" }}
-                formatter={(value) => value.charAt(0).toUpperCase() + value.slice(1)}
+                formatter={(value) => tr(String(value).charAt(0).toUpperCase() + String(value).slice(1))}
               />
               <Line
                 type="monotone"

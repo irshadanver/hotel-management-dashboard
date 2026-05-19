@@ -7,6 +7,7 @@ import { useDashboardArrivals } from "@/lib/api/hooks/use-dashboard";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { DetailDrawer } from "@/components/detail/detail-drawer";
 import { GuestDetailPanel } from "@/components/detail/guest-detail-panel";
+import { useLocale } from "@/lib/i18n/locale";
 
 const statusConfig = {
   confirmed: { label: "Confirmed", variant: "default" as const },
@@ -16,6 +17,7 @@ const statusConfig = {
 
 export function ArrivalsTable() {
   const { data: arrivals, loading, error } = useDashboardArrivals();
+  const { tr } = useLocale();
   const [guestOpen, setGuestOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<{
     guestName: string;
@@ -51,14 +53,14 @@ export function ArrivalsTable() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-base font-semibold">
-                Arrivals Today
+                {tr("Arrivals Today")}
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Click a row to drill down
+                {tr("Click a row to drill down")}
               </p>
             </div>
             <Badge variant="outline" className="text-xs">
-              {arrivals.length} Guests
+              {arrivals.length} {tr("Guests")}
             </Badge>
           </div>
         </CardHeader>
@@ -68,16 +70,16 @@ export function ArrivalsTable() {
               <thead>
                 <tr className="border-b">
                   <th className="pb-3 text-left text-xs font-medium text-muted-foreground">
-                    Guest Name
+                    {tr("Guest Name")}
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-muted-foreground">
-                    Room Type
+                    {tr("Room Type")}
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-muted-foreground">
                     ETA
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-muted-foreground">
-                    Status
+                    {tr("Status")}
                   </th>
                 </tr>
               </thead>
@@ -118,7 +120,7 @@ export function ArrivalsTable() {
                         {arrival.guestName}
                       </td>
                       <td className="py-3 text-sm text-muted-foreground">
-                        {arrival.roomType}
+                        {tr(arrival.roomType)}
                       </td>
                       <td className="py-3 text-sm text-muted-foreground">
                         {arrival.eta}
@@ -132,7 +134,7 @@ export function ArrivalsTable() {
                               : ""
                           }
                         >
-                          {config.label}
+                          {tr(config.label)}
                         </Badge>
                       </td>
                     </tr>
@@ -147,8 +149,8 @@ export function ArrivalsTable() {
       <DetailDrawer
         open={guestOpen}
         onOpenChange={setGuestOpen}
-        title="Arrival details"
-        description="Guest drill-down"
+        title={tr("Arrival details")}
+        description={tr("Guest drill-down")}
       >
         {selectedGuest && (
           <GuestDetailPanel guest={selectedGuest} context="arrival" />

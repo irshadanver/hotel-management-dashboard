@@ -1,5 +1,6 @@
 "use client";
 
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
 import {
   fetchDashboardArrivals,
   fetchDashboardDepartures,
@@ -11,25 +12,31 @@ import {
 import { useApiQuery } from "./use-api-query";
 
 export function useDashboardKPIs() {
-  return useApiQuery(fetchDashboardKPIs);
+  const { rangeQuery, rangeQueryKey } = useGlobalDateFilter();
+  return useApiQuery(() => fetchDashboardKPIs(rangeQuery), [rangeQueryKey]);
 }
 
 export function useRevenueTrend() {
-  return useApiQuery(fetchRevenueTrend);
+  const { rangeQuery, rangeQueryKey } = useGlobalDateFilter();
+  return useApiQuery(() => fetchRevenueTrend(rangeQuery), [rangeQueryKey]);
 }
 
 export function useOccupancyForecast() {
-  return useApiQuery(fetchOccupancyForecast);
+  const { rangeQuery, rangeQueryKey } = useGlobalDateFilter();
+  return useApiQuery(() => fetchOccupancyForecast(rangeQuery), [rangeQueryKey]);
 }
 
 export function useDashboardArrivals() {
-  return useApiQuery(fetchDashboardArrivals);
+  const { rangeQuery, rangeQueryKey } = useGlobalDateFilter();
+  return useApiQuery(() => fetchDashboardArrivals(rangeQuery), [rangeQueryKey]);
 }
 
 export function useDashboardDepartures() {
-  return useApiQuery(fetchDashboardDepartures);
+  const { rangeQuery, rangeQueryKey } = useGlobalDateFilter();
+  return useApiQuery(() => fetchDashboardDepartures(rangeQuery), [rangeQueryKey]);
 }
 
 export function useDashboardExceptions() {
-  return useApiQuery(fetchDashboardExceptions);
+  const { rangeQuery, rangeQueryKey } = useGlobalDateFilter();
+  return useApiQuery(() => fetchDashboardExceptions(rangeQuery), [rangeQueryKey]);
 }

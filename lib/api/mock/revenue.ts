@@ -233,3 +233,43 @@ export function getFilteredLowDemand(filters?: RevenueFilters) {
   const dayLimit = getDays(range);
   return filterSegment(baseLowDemand, segment).slice(0, Math.max(1, Math.ceil(dayLimit / 15)));
 }
+
+/** Values aligned with Revenue dashboard filter controls (for drill-down mock). */
+export function getRevenueDrillAdrDisplay(filters?: RevenueFilters): string {
+  const row = getFilteredRevenueKPIs(filters).find((k) => k.title === "ADR Forecast");
+  return String(row?.value ?? formatSAR(485));
+}
+
+export function getRevenueDrillRevparDisplay(filters?: RevenueFilters): string {
+  const { range, segment } = normalizeFilters(filters);
+  const mult =
+    rangeScale(range) * (0.82 + 0.35 * segmentScale(segment));
+  return formatSAR(Math.round(380 * mult));
+}
+
+export function getRevenueDrillTodayRevenueDisplay(
+  filters?: RevenueFilters
+): string {
+  const { range, segment } = normalizeFilters(filters);
+  const mult =
+    rangeScale(range) * (0.55 + 0.9 * segmentScale(segment));
+  return formatSAR(Math.round(127_450 * mult));
+}
+
+export function getRevenueDrillMtdRevenueDisplay(
+  filters?: RevenueFilters
+): string {
+  const { range, segment } = normalizeFilters(filters);
+  const mult =
+    rangeScale(range) * (0.55 + 0.9 * segmentScale(segment));
+  return formatSAR(Math.round(1_856_200 * mult));
+}
+
+export function getRevenueDrillCashPositionDisplay(
+  filters?: RevenueFilters
+): string {
+  const { range, segment } = normalizeFilters(filters);
+  const mult =
+    rangeScale(range) * (0.72 + 0.56 * segmentScale(segment));
+  return formatSAR(Math.round(892_340 * mult));
+}

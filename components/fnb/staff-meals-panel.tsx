@@ -6,6 +6,7 @@ import { Gift, Users } from "lucide-react";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useMealEntries } from "@/lib/api/hooks/use-fnb";
 import type { FnBFilters } from "@/lib/api/mock/fnb";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface StaffMealsPanelProps {
   filters?: FnBFilters;
@@ -13,6 +14,7 @@ interface StaffMealsPanelProps {
 
 export function StaffMealsPanel({ filters }: StaffMealsPanelProps) {
   const { data: mealEntries, loading, error } = useMealEntries(filters);
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -44,7 +46,7 @@ export function StaffMealsPanel({ filters }: StaffMealsPanelProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Gift className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-base font-semibold">Complimentary & Staff Meals</CardTitle>
+          <CardTitle className="text-base font-semibold">{tr("Complimentary & Staff Meals")}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 p-4 pt-0">
@@ -52,7 +54,7 @@ export function StaffMealsPanel({ filters }: StaffMealsPanelProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Complimentary
+              {tr("Complimentary")}
             </span>
             <span className="text-sm font-semibold text-foreground">
               SAR {totalComp.toLocaleString()}
@@ -65,8 +67,8 @@ export function StaffMealsPanel({ filters }: StaffMealsPanelProps) {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium">{entry.description}</p>
-                  <p className="text-xs text-muted-foreground">{entry.outlet}</p>
+                  <p className="text-sm font-medium">{tr(entry.description)}</p>
+                  <p className="text-xs text-muted-foreground">{tr(entry.outlet)}</p>
                 </div>
                 <span className="text-sm font-semibold tabular-nums">
                   SAR {entry.amount}
@@ -76,7 +78,7 @@ export function StaffMealsPanel({ filters }: StaffMealsPanelProps) {
                 <Badge variant="outline" className="text-xs">
                   {entry.authorizedBy}
                 </Badge>
-                <span className="text-xs text-muted-foreground">{entry.reason}</span>
+                <span className="text-xs text-muted-foreground">{tr(entry.reason)}</span>
               </div>
             </div>
           ))}
@@ -88,7 +90,7 @@ export function StaffMealsPanel({ filters }: StaffMealsPanelProps) {
             <div className="flex items-center gap-2">
               <Users className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Staff Meals
+                {tr("Staff Meals")}
               </span>
             </div>
             <span className="text-sm font-semibold text-foreground">
@@ -101,8 +103,8 @@ export function StaffMealsPanel({ filters }: StaffMealsPanelProps) {
               className="flex items-center justify-between rounded-lg border bg-muted/20 p-3"
             >
               <div>
-                <p className="text-sm font-medium">{entry.description}</p>
-                <p className="text-xs text-muted-foreground">{entry.outlet} • {entry.reason}</p>
+                <p className="text-sm font-medium">{tr(entry.description)}</p>
+                <p className="text-xs text-muted-foreground">{tr(entry.outlet)} • {tr(entry.reason)}</p>
               </div>
               <span className="text-sm font-semibold tabular-nums">
                 SAR {entry.amount}

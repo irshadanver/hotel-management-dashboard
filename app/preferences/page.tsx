@@ -13,11 +13,13 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n/locale";
 
 export default function PreferencesPage() {
   const [theme, setTheme] = useState("system");
   const [dateFormat, setDateFormat] = useState("dd-mmm-yyyy");
   const [notifications, setNotifications] = useState(true);
+  const { tr } = useLocale();
 
   return (
     <DashboardShell
@@ -27,24 +29,24 @@ export default function PreferencesPage() {
     >
       <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-base">Application Preferences</CardTitle>
+          <CardTitle className="text-base">{tr("Application Preferences")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-2">
-            <Label>Theme</Label>
+            <Label>{tr("Theme")}</Label>
             <Select value={theme} onValueChange={setTheme}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="system">System</SelectItem>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="system">{tr("System")}</SelectItem>
+                <SelectItem value="light">{tr("Light")}</SelectItem>
+                <SelectItem value="dark">{tr("Dark")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Date Format</Label>
+            <Label>{tr("Date Format")}</Label>
             <Select value={dateFormat} onValueChange={setDateFormat}>
               <SelectTrigger>
                 <SelectValue />
@@ -58,14 +60,14 @@ export default function PreferencesPage() {
           </div>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
-              <Label>Notifications</Label>
+              <Label>{tr("Notifications")}</Label>
               <p className="text-xs text-muted-foreground">
-                Show operational alerts in the header.
+                {tr("Show operational alerts in the header.")}
               </p>
             </div>
             <Switch checked={notifications} onCheckedChange={setNotifications} />
           </div>
-          <Button disabled>Save preferences (API required)</Button>
+          <Button disabled>{tr("Save preferences (API required)")}</Button>
         </CardContent>
       </Card>
     </DashboardShell>

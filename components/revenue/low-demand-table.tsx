@@ -14,8 +14,9 @@ import { AlertTriangle } from "lucide-react";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useLowDemand } from "@/lib/api/hooks/use-revenue";
 import type { RevenueFilters } from "@/lib/api/mock/revenue";
+import { useLocale } from "@/lib/i18n/locale";
 
-function getSeverityBadge(severity: string) {
+function getSeverityBadge(severity: string, tr: (text: string) => string) {
   switch (severity) {
     case "critical":
       return (
@@ -23,19 +24,19 @@ function getSeverityBadge(severity: string) {
           variant="destructive"
           className="bg-red-100 text-red-700 hover:bg-red-100"
         >
-          Critical
+          {tr("Critical")}
         </Badge>
       );
     case "warning":
       return (
         <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
-          Low
+          {tr("Low")}
         </Badge>
       );
     default:
       return (
         <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
-          Watch
+          {tr("Watch")}
         </Badge>
       );
   }
@@ -47,6 +48,7 @@ interface LowDemandTableProps {
 
 export function LowDemandTable({ filters }: LowDemandTableProps) {
   const { data: lowDemandDates, loading, error } = useLowDemand(filters);
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -74,27 +76,27 @@ export function LowDemandTable({ filters }: LowDemandTableProps) {
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-amber-500" />
           <CardTitle className="text-base font-semibold">
-            Low-Demand Dates
+            {tr("Low-Demand Dates")}
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent>
-        <Table>
+      <CardContent className="px-3 pb-4">
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs font-medium">Date</TableHead>
-              <TableHead className="text-xs font-medium">Day</TableHead>
-              <TableHead className="text-right text-xs font-medium">
-                Occupancy
+              <TableHead className="w-[28%] px-1.5 text-xs font-medium">{tr("Date")}</TableHead>
+              <TableHead className="w-[15%] px-1 text-xs font-medium">{tr("Day")}</TableHead>
+              <TableHead className="w-[17%] px-1 text-right text-xs font-medium">
+                {tr("Occupancy")}
               </TableHead>
-              <TableHead className="text-right text-xs font-medium">
-                Available
+              <TableHead className="w-[14%] px-1 text-right text-xs font-medium">
+                {tr("Available")}
               </TableHead>
-              <TableHead className="text-right text-xs font-medium">
+              <TableHead className="w-[12%] px-1 text-right text-xs font-medium">
                 ADR
               </TableHead>
-              <TableHead className="text-center text-xs font-medium">
-                Status
+              <TableHead className="w-[14%] px-1 text-center text-xs font-medium">
+                {tr("Status")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -110,27 +112,27 @@ export function LowDemandTable({ filters }: LowDemandTableProps) {
                       : ""
                 }
               >
-                <TableCell className="py-2.5 text-sm font-medium">
+                <TableCell className="px-1.5 py-2.5 text-sm font-medium">
                   {item.date}
                 </TableCell>
-                <TableCell className="py-2.5 text-sm text-muted-foreground">
-                  {item.dayOfWeek}
+                <TableCell className="px-1 py-2.5 text-sm text-muted-foreground">
+                  {tr(item.dayOfWeek)}
                 </TableCell>
                 <TableCell
-                  className={`py-2.5 text-right text-sm font-medium ${
+                  className={`px-1 py-2.5 text-right text-sm font-medium ${
                     item.occupancy < 50 ? "text-red-600" : "text-amber-600"
                   }`}
                 >
                   {item.occupancy}%
                 </TableCell>
-                <TableCell className="py-2.5 text-right text-sm">
+                <TableCell className="px-1 py-2.5 text-right text-sm">
                   {item.roomsAvailable}
                 </TableCell>
-                <TableCell className="py-2.5 text-right text-sm text-muted-foreground">
+                <TableCell className="px-1 py-2.5 text-right text-sm text-muted-foreground">
                   SAR {item.adr}
                 </TableCell>
-                <TableCell className="py-2.5 text-center">
-                  {getSeverityBadge(item.severity)}
+                <TableCell className="px-1 py-2.5 text-center">
+                  {getSeverityBadge(item.severity, tr)}
                 </TableCell>
               </TableRow>
             ))}

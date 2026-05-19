@@ -14,10 +14,12 @@ import { useRouter } from "next/navigation";
 import { useRevenueTrend } from "@/lib/api/hooks/use-dashboard";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { revenueDayHref } from "@/lib/drill-down/routes";
+import { useLocale } from "@/lib/i18n/locale";
 
 export function RevenueChart() {
   const router = useRouter();
   const { data, loading, error } = useRevenueTrend();
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -42,10 +44,10 @@ export function RevenueChart() {
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
-          Revenue Trend (Last 7 Days)
+          {tr("Revenue Trend (Last 7 Days)")}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Click a point to drill down to revenue
+          {tr("Click a point to drill down to revenue")}
         </p>
       </CardHeader>
       <CardContent>
@@ -86,7 +88,7 @@ export function RevenueChart() {
                 }}
                 formatter={(value: number) => [
                   `SAR ${value.toLocaleString()}`,
-                  "Revenue",
+                  tr("Revenue"),
                 ]}
               />
               <Line

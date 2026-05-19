@@ -8,10 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveSession } from "@/lib/auth/session";
+import { useLocale } from "@/lib/i18n/locale";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { tr } = useLocale();
   const [chainId, setChainId] = useState("CHAIN01");
   const [propertyId, setPropertyId] = useState("MADINAH01");
   const [userId, setUserId] = useState("Ahmed Hassan");
@@ -33,16 +35,16 @@ function LoginForm() {
             <Building2 className="h-6 w-6" />
           </div>
           <div>
-            <CardTitle className="text-2xl">HotelOS Login</CardTitle>
+            <CardTitle className="text-2xl">{tr("HotelOS Login")}</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
-              Enter chain, property, and user credentials.
+              {tr("Enter chain, property, and user credentials.")}
             </p>
           </div>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={onSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="chainId">Chain ID</Label>
+              <Label htmlFor="chainId">{tr("Chain ID")}</Label>
               <Input
                 id="chainId"
                 value={chainId}
@@ -52,7 +54,7 @@ function LoginForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="propertyId">Property ID</Label>
+              <Label htmlFor="propertyId">{tr("Property ID")}</Label>
               <Input
                 id="propertyId"
                 value={propertyId}
@@ -62,32 +64,32 @@ function LoginForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="userId">User ID</Label>
+              <Label htmlFor="userId">{tr("User ID")}</Label>
               <Input
                 id="userId"
                 value={userId}
                 onChange={(event) => setUserId(event.target.value)}
-                placeholder="User ID"
+                placeholder={tr("User ID")}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{tr("Password")}</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Password"
+                placeholder={tr("Password")}
                 required
               />
             </div>
             <Button type="submit" className="w-full">
               <Lock className="h-4 w-4" />
-              Sign In
+              {tr("Sign In")}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Mock login for demo. Any values are accepted until API is wired.
+              {tr("Mock login for demo. Any values are accepted until API is wired.")}
             </p>
           </form>
         </CardContent>

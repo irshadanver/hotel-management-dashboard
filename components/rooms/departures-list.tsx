@@ -6,6 +6,7 @@ import { Clock } from "lucide-react";
 import { useRoomDepartures } from "@/lib/api/hooks/use-rooms";
 import type { RoomFilters } from "@/lib/api/mock/rooms";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
+import { useLocale } from "@/lib/i18n/locale";
 
 const statusStyles = {
   "due-out": "bg-amber-100 text-amber-700",
@@ -19,6 +20,7 @@ interface DeparturesListProps {
 
 export function DeparturesList({ filters }: DeparturesListProps) {
   const { data: departures, loading, error } = useRoomDepartures(filters);
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -45,10 +47,10 @@ export function DeparturesList({ filters }: DeparturesListProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">
-            Departures Today
+            {tr("Departures Today")}
           </CardTitle>
           <Badge variant="secondary" className="font-normal">
-            {departures.length} guests
+            {departures.length} {tr("guests")}
           </Badge>
         </div>
       </CardHeader>
@@ -74,7 +76,7 @@ export function DeparturesList({ filters }: DeparturesListProps) {
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span>{departure.roomNumber}</span>
                       <span>·</span>
-                      <span>{departure.roomType}</span>
+                      <span>{tr(departure.roomType)}</span>
                     </div>
                   </div>
                 </div>
@@ -92,10 +94,10 @@ export function DeparturesList({ filters }: DeparturesListProps) {
                     className={`${statusStyles[departure.status]} border-0 text-xs font-medium`}
                   >
                     {departure.status === "checked-out"
-                      ? "Checked Out"
+                      ? tr("Checked Out")
                       : departure.status === "extended"
-                        ? "Extended"
-                        : "Due Out"}
+                        ? tr("Extended")
+                        : tr("Due Out")}
                   </Badge>
                 </div>
               </div>

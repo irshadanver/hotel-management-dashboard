@@ -6,6 +6,7 @@ import { Clock, AlertCircle } from "lucide-react";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useOpenChecks } from "@/lib/api/hooks/use-fnb";
 import type { FnBFilters } from "@/lib/api/mock/fnb";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface OpenChecksPanelProps {
   filters?: FnBFilters;
@@ -13,6 +14,7 @@ interface OpenChecksPanelProps {
 
 export function OpenChecksPanel({ filters }: OpenChecksPanelProps) {
   const { data: openChecks, loading, error } = useOpenChecks(filters);
+  const { tr } = useLocale();
   if (loading) {
     return (
       <Card className="shadow-sm">
@@ -41,14 +43,14 @@ export function OpenChecksPanel({ filters }: OpenChecksPanelProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base font-semibold">Open Checks</CardTitle>
+            <CardTitle className="text-base font-semibold">{tr("Open Checks")}</CardTitle>
           </div>
           <Badge variant="secondary" className="font-semibold">
-            {openChecks.length} Open
+            {openChecks.length} {tr("Open")}
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          Total: <span className="font-semibold text-foreground">SAR {totalOpen.toLocaleString()}</span>
+          {tr("Total")}: <span className="font-semibold text-foreground">SAR {totalOpen.toLocaleString()}</span>
         </p>
       </CardHeader>
       <CardContent className="space-y-2 p-4 pt-0">
@@ -73,7 +75,7 @@ export function OpenChecksPanel({ filters }: OpenChecksPanelProps) {
                 <span>{check.openTime}</span>
                 <span>•</span>
                 <span className={check.duration > 60 ? "text-amber-600 font-medium" : ""}>
-                  {check.duration} min
+                  {check.duration} {tr("min")}
                 </span>
               </div>
             </div>

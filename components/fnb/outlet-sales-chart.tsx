@@ -14,6 +14,7 @@ import {
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useOutletSales } from "@/lib/api/hooks/use-fnb";
 import type { FnBFilters } from "@/lib/api/mock/fnb";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface OutletSalesChartProps {
   filters?: FnBFilters;
@@ -21,6 +22,7 @@ interface OutletSalesChartProps {
 
 export function OutletSalesChart({ filters }: OutletSalesChartProps) {
   const { data, loading, error } = useOutletSales(filters);
+  const { tr } = useLocale();
 
   if (loading) {
     return (
@@ -45,7 +47,7 @@ export function OutletSalesChart({ filters }: OutletSalesChartProps) {
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Sales by Outlet</CardTitle>
+        <CardTitle className="text-base font-semibold">{tr("Sales by Outlet")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[280px]">
@@ -72,7 +74,7 @@ export function OutletSalesChart({ filters }: OutletSalesChartProps) {
                 width={75}
               />
               <Tooltip
-                formatter={(value: number) => [`SAR ${value.toLocaleString()}`, "Sales"]}
+                formatter={(value: number) => [`SAR ${value.toLocaleString()}`, tr("Sales")]}
                 contentStyle={{
                   backgroundColor: "white",
                   border: "1px solid #e5e7eb",

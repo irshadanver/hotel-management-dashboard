@@ -1,8 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockListTakeCount } from "@/lib/date/mock-list-window";
 
 interface ReorderItem {
   name: string;
@@ -25,15 +29,22 @@ const reorderItems: ReorderItem[] = [
 ];
 
 export function ReorderAlertsTable() {
+  const { tr } = useLocale();
+  const { rangeQuery } = useGlobalDateFilter();
+  const items = useMemo(
+    () => reorderItems.slice(0, mockListTakeCount(reorderItems.length, rangeQuery)),
+    [rangeQuery]
+  );
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-red-600" />
-            <CardTitle className="text-base font-semibold">Reorder Alerts</CardTitle>
+            <CardTitle className="text-base font-semibold">{tr("Reorder Alerts")}</CardTitle>
           </div>
-          <Badge variant="destructive">{reorderItems.length} items</Badge>
+          <Badge variant="destructive">{items.length} {tr("items")}</Badge>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -41,14 +52,14 @@ export function ReorderAlertsTable() {
           <table className="w-full table-fixed">
             <thead className="sticky top-0 bg-muted/50">
               <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                <th className="w-[34%] px-2 py-2.5">Item</th>
-                <th className="w-[21%] px-1.5 py-2.5 text-center">Current</th>
-                <th className="w-[21%] px-1.5 py-2.5 text-center">Reorder</th>
-                <th className="w-[24%] px-1.5 py-2.5 text-center">Status</th>
+                <th className="w-[34%] px-2 py-2.5">{tr("Item")}</th>
+                <th className="w-[21%] px-1.5 py-2.5 text-center">{tr("Current")}</th>
+                <th className="w-[21%] px-1.5 py-2.5 text-center">{tr("Reorder")}</th>
+                <th className="w-[24%] px-1.5 py-2.5 text-center">{tr("Status")}</th>
               </tr>
             </thead>
             <tbody>
-              {reorderItems.map((item, index) => (
+              {items.map((item, index) => (
                 <tr
                   key={index}
                   className={`border-b border-muted/30 text-sm transition-colors ${
@@ -63,7 +74,7 @@ export function ReorderAlertsTable() {
                       >
                         {item.name}
                       </p>
-                      <p className="text-xs text-muted-foreground">{item.category}</p>
+                      <p className="text-xs text-muted-foreground">{tr(item.category)}</p>
                     </div>
                   </td>
                   <td className="px-1.5 py-2.5 text-center">
@@ -83,7 +94,7 @@ export function ReorderAlertsTable() {
                           : "whitespace-nowrap"
                       }
                     >
-                      {item.status === "critical" ? "Critical" : "Low"}
+                      {tr(item.status === "critical" ? "Critical" : "Low")}
                     </Badge>
                   </td>
                 </tr>

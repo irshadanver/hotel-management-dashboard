@@ -9,6 +9,7 @@ import {
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useBookingPace } from "@/lib/api/hooks/use-revenue";
 import type { RevenueFilters } from "@/lib/api/mock/revenue";
+import { useLocale } from "@/lib/i18n/locale";
 
 interface BookingPaceChartProps {
   filters?: RevenueFilters;
@@ -16,7 +17,8 @@ interface BookingPaceChartProps {
 
 export function BookingPaceChart({ filters }: BookingPaceChartProps) {
   const { data, loading, error } = useBookingPace(filters);
-  const formatValue = (value: number) => `${value} nights`;
+  const { tr } = useLocale();
+  const formatValue = (value: number) => `${value} ${tr("nights")}`;
   const days = filters?.range?.replace("d", "") ?? "30";
 
   if (loading) return <DataLoading label="Loading booking pace..." />;
@@ -26,11 +28,11 @@ export function BookingPaceChart({ filters }: BookingPaceChartProps) {
 
   return (
     <ChartCard
-      title={`Booking Pace (Next ${days} Days)`}
+      title={`${tr("Booking Pace")} (${tr("Next")} ${days} ${tr("Days")})`}
       legend={
         <>
-          <LegendItem color={chartColors.primary} label="Current Period" />
-          <LegendItem color={chartColors.muted} label="Last Year" dashed />
+          <LegendItem color={chartColors.primary} label={tr("Current Period")} />
+          <LegendItem color={chartColors.muted} label={tr("Last Year")} dashed />
         </>
       }
       height={240}
@@ -41,8 +43,8 @@ export function BookingPaceChart({ filters }: BookingPaceChartProps) {
         valueFormatter={formatValue}
         height={240}
         lines={[
-          { dataKey: "current", color: chartColors.primary, name: "Current Period" },
-          { dataKey: "lastYear", color: "#9ca3af", name: "Last Year", dashed: true },
+          { dataKey: "current", color: chartColors.primary, name: tr("Current Period") },
+          { dataKey: "lastYear", color: "#9ca3af", name: tr("Last Year"), dashed: true },
         ]}
       />
     </ChartCard>

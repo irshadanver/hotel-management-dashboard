@@ -1,8 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useLocale } from "@/lib/i18n/locale";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { mockListTakeCount } from "@/lib/date/mock-list-window";
+import { mockNumericScale } from "@/lib/date/preset-multipliers";
 
 interface SlowMovingItem {
   name: string;
@@ -22,15 +27,28 @@ const slowMovingItems: SlowMovingItem[] = [
 ];
 
 export function SlowMovingTable() {
+  const { tr } = useLocale();
+  const { rangeQuery } = useGlobalDateFilter();
+  const m = mockNumericScale(rangeQuery);
+
+  const items = useMemo(() => {
+    const take = mockListTakeCount(slowMovingItems.length, rangeQuery);
+    return slowMovingItems.slice(0, take).map((row) => ({
+      ...row,
+      stockValue: Math.round(row.stockValue * m),
+      daysSinceUsed: Math.max(1, Math.round(row.daysSinceUsed * (0.95 + 0.05 * m))),
+    }));
+  }, [rangeQuery, m]);
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-amber-600" />
-            <CardTitle className="text-base font-semibold">Slow-Moving Items</CardTitle>
+            <CardTitle className="text-base font-semibold">{tr("Slow-Moving Items")}</CardTitle>
           </div>
-          <span className="text-xs text-muted-foreground">No movement {">"}21 days</span>
+          <span className="text-xs text-muted-foreground">{tr("No movement")} {">"}21 {tr("Days").toLowerCase()}</span>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -38,14 +56,14 @@ export function SlowMovingTable() {
           <table className="w-full">
             <thead className="sticky top-0 bg-muted/50">
               <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                <th className="px-4 py-2.5">Item</th>
-                <th className="px-4 py-2.5 text-right">Value</th>
-                <th className="px-4 py-2.5 text-right">Days</th>
-                <th className="px-4 py-2.5 text-center">Status</th>
+                <th className="px-4 py-2.5">{tr("Item")}</th>
+                <th className="px-4 py-2.5 text-right">{tr("Value")}</th>
+                <th className="px-4 py-2.5 text-right">{tr("Days")}</th>
+                <th className="px-4 py-2.5 text-center">{tr("Status")}</th>
               </tr>
             </thead>
             <tbody>
-              {slowMovingItems.map((item, index) => (
+              {items.map((item, index) => (
                 <tr
                   key={index}
                   className={`border-b border-muted/30 text-sm transition-colors ${
@@ -55,7 +73,7 @@ export function SlowMovingTable() {
                   <td className="px-4 py-2.5">
                     <div>
                       <p className="font-medium text-foreground">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.category}</p>
+                      <p className="text-xs text-muted-foreground">{tr(item.category)}</p>
                     </div>
                   </td>
                   <td className="px-4 py-2.5 text-right font-medium tabular-nums">
@@ -75,7 +93,7 @@ export function SlowMovingTable() {
                           : ""
                       }
                     >
-                      {item.status === "stale" ? "Stale" : "Aging"}
+                      {tr(item.status === "stale" ? "Stale" : "Aging")}
                     </Badge>
                   </td>
                 </tr>

@@ -1,10 +1,16 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Noto_Sans_Arabic } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { LocaleProvider } from '@/lib/i18n/locale'
+import { GlobalDateFilterProvider } from '@/lib/date/global-date-filter'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+const notoSansArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  variable: "--font-arabic",
+});
 
 export const metadata: Metadata = {
   title: 'HotelOS - Property Management System',
@@ -35,9 +41,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-background">
+    <html
+      lang="en"
+      dir="ltr"
+      className={`${geist.variable} ${geistMono.variable} ${notoSansArabic.variable} bg-background`}
+      suppressHydrationWarning
+    >
       <body className="font-sans antialiased">
-        {children}
+        <LocaleProvider>
+          <GlobalDateFilterProvider>{children}</GlobalDateFilterProvider>
+        </LocaleProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
