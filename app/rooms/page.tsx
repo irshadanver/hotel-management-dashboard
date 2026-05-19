@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { RoomsKPICards } from "@/components/rooms/rooms-kpi-cards";
@@ -11,17 +11,27 @@ import { VIPPanel } from "@/components/rooms/vip-panel";
 import { RoomsFilters } from "@/components/rooms/rooms-filters";
 import { RoomsOccupancyChart } from "@/components/rooms/rooms-occupancy-chart";
 import { DataLoading } from "@/components/shared/data-loading";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { useSyncScreenWithHeader } from "@/lib/date/use-sync-screen-with-header";
 
 function RoomsPageContent() {
   const searchParams = useSearchParams();
+  const { rangeQuery } = useGlobalDateFilter();
   const statusFilter = searchParams.get("status");
   const highlightRoom = searchParams.get("room");
   const [selectedDate, setSelectedDate] = useState("today");
   const [selectedRoomType, setSelectedRoomType] = useState("all");
-  const roomFilters = {
-    date: selectedDate,
-    roomType: selectedRoomType,
-  };
+
+  useSyncScreenWithHeader(setSelectedDate);
+
+  const roomFilters = useMemo(
+    () => ({
+      date: selectedDate,
+      roomType: selectedRoomType,
+      ...(selectedDate === "header" ? { headerRange: rangeQuery } : {}),
+    }),
+    [selectedDate, selectedRoomType, rangeQuery]
+  );
 
   return (
     <DashboardShell
@@ -41,8 +51,7 @@ function RoomsPageContent() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <RoomStatusGrid
-            selectedDate={selectedDate}
-            selectedRoomType={selectedRoomType}
+            filters={roomFilters}
             statusFilter={statusFilter}
             highlightRoom={highlightRoom}
           />

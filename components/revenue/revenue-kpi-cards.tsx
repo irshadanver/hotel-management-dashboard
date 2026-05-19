@@ -119,6 +119,9 @@ export function RevenueKPICards({ filters }: RevenueKPICardsProps) {
           ? withDrillDateContext(baseHref, "revenue", {
               revRange: filters?.range,
               revSegment: filters?.segment,
+              ...(filters?.range === "header" && filters?.headerRange
+                ? { rangeQuery: filters.headerRange }
+                : {}),
             })
           : undefined;
         const visual = kpiVisuals[kpi.title] ?? kpiVisuals["Room Revenue Forecast"];

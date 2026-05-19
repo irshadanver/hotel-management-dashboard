@@ -10,10 +10,15 @@ import {
   fetchSlowItems,
   fetchTopItems,
 } from "../services/fnb";
+import { dateRangeQueryKey } from "@/lib/date/date-range-query";
 import { useApiQuery } from "./use-api-query";
 
 function fnbFilterDeps(filters?: FnBFilters) {
-  return [filters?.date ?? "today", filters?.outlet ?? "all"];
+  const headerKey =
+    filters?.date === "header" && filters?.headerRange
+      ? dateRangeQueryKey(filters.headerRange)
+      : "";
+  return [filters?.date ?? "today", filters?.outlet ?? "all", headerKey];
 }
 
 export function useFnBKPIs(filters?: FnBFilters) {

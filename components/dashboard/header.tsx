@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { KeyboardEvent, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, Calendar, ChevronDown, Languages, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/locale";
 import { getActiveAlertCount } from "@/lib/api";
 import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { isHeaderDateRangeSelectionEnabled } from "@/lib/date/header-date-range-enabled";
 
 interface HeaderProps {
   sidebarCollapsed?: boolean;
@@ -32,7 +33,9 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const { direction, isRTL, toggleLocale, t } = useLocale();
+  const headerDateSelectionEnabled = isHeaderDateRangeSelectionEnabled(pathname);
   const {
     setPreset,
     triggerLabel,
@@ -184,82 +187,104 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
           <span>{t.languageToggle}</span>
         </Button>
 
-        {/* Date Selector */}
-        <DropdownMenu open={dateMenuOpen} onOpenChange={setDateMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline max-w-[14rem] truncate">
+        {/* Date Selector — disabled on drill-down and non-module pages */}
+        {headerDateSelectionEnabled ? (
+          <DropdownMenu open={dateMenuOpen} onOpenChange={setDateMenuOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Calendar className="h-4 w-4" />
+                <span className="hidden sm:inline max-w-[14rem] truncate">
+                  {triggerLabel}
+                </span>
+                <ChevronDown className="h-3 w-3 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align={isRTL ? "start" : "end"}
+              className="w-72 p-0"
+              onCloseAutoFocus={(e) => e.preventDefault()}
+            >
+              <div className="p-1">
+                <DropdownMenuItem onClick={() => setPreset("today")}>
+                  {t.today}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPreset("yesterday")}>
+                  {t.yesterday}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPreset("last7Days")}>
+                  {t.last7Days}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPreset("last30Days")}>
+                  {t.last30Days}
+                </DropdownMenuItem>
+              </div>
+              <DropdownMenuSeparator className="my-0" />
+              <div
+                className="space-y-3 p-3"
+                onPointerDown={(e) => e.preventDefault()}
+              >
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t.customRange}
+                </p>
+                <div className="grid gap-2">
+                  <label className="grid gap-1">
+                    <span className="text-xs text-muted-foreground">
+                      {t.dateFrom}
+                    </span>
+                    <input
+                      type="date"
+                      value={draftStart}
+                      onChange={(e) => setDraftStart(e.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                    />
+                  </label>
+                  <label className="grid gap-1">
+                    <span className="text-xs text-muted-foreground">
+                      {t.dateTo}
+                    </span>
+                    <input
+                      type="date"
+                      value={draftEnd}
+                      onChange={(e) => setDraftEnd(e.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                    />
+                  </label>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    applyCustomDateRange(draftStart, draftEnd);
+                    setDateMenuOpen(false);
+                  }}
+                >
+                  {t.applyDateRange}
+                </Button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <span
+            className="inline-flex"
+            title={t.dateSelectionReadOnlyHint}
+          >
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2 opacity-80"
+              disabled
+              aria-label={t.dateSelectionReadOnlyHint}
+            >
+              <Calendar className="h-4 w-4 shrink-0" />
+              <span className="hidden max-w-[14rem] truncate sm:inline">
                 {triggerLabel}
               </span>
-              <ChevronDown className="h-3 w-3 shrink-0" />
+              <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align={isRTL ? "start" : "end"}
-            className="w-72 p-0"
-            onCloseAutoFocus={(e) => e.preventDefault()}
-          >
-            <div className="p-1">
-              <DropdownMenuItem onClick={() => setPreset("today")}>
-                {t.today}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setPreset("yesterday")}>
-                {t.yesterday}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setPreset("last7Days")}>
-                {t.last7Days}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setPreset("last30Days")}>
-                {t.last30Days}
-              </DropdownMenuItem>
-            </div>
-            <DropdownMenuSeparator className="my-0" />
-            <div
-              className="space-y-3 p-3"
-              onPointerDown={(e) => e.preventDefault()}
-            >
-              <p className="text-xs font-medium text-muted-foreground">
-                {t.customRange}
-              </p>
-              <div className="grid gap-2">
-                <label className="grid gap-1">
-                  <span className="text-xs text-muted-foreground">
-                    {t.dateFrom}
-                  </span>
-                  <input
-                    type="date"
-                    value={draftStart}
-                    onChange={(e) => setDraftStart(e.target.value)}
-                    className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                  />
-                </label>
-                <label className="grid gap-1">
-                  <span className="text-xs text-muted-foreground">
-                    {t.dateTo}
-                  </span>
-                  <input
-                    type="date"
-                    value={draftEnd}
-                    onChange={(e) => setDraftEnd(e.target.value)}
-                    className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                  />
-                </label>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  applyCustomDateRange(draftStart, draftEnd);
-                  setDateMenuOpen(false);
-                }}
-              >
-                {t.applyDateRange}
-              </Button>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </span>
+        )}
 
         {/* Notifications */}
         <Button

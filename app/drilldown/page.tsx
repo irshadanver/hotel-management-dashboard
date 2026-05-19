@@ -202,6 +202,8 @@ function DrillDownContent() {
     roomType: searchParams.get("roomType") ?? undefined,
     revRange: searchParams.get("revRange") ?? undefined,
     revSegment: searchParams.get("revSegment") ?? undefined,
+    fnbDate: searchParams.get("fnbDate") ?? undefined,
+    fnbOutlet: searchParams.get("fnbOutlet") ?? undefined,
   };
   const dataset = getDrillDownDataset(
     searchParams.get("domain"),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { FnBKPICards } from "@/components/fnb/fnb-kpi-cards";
 import { FnBFilters } from "@/components/fnb/fnb-filters";
@@ -10,15 +10,24 @@ import { TopItemsTable } from "@/components/fnb/top-items-table";
 import { SlowItemsTable } from "@/components/fnb/slow-items-table";
 import { OpenChecksPanel } from "@/components/fnb/open-checks-panel";
 import { StaffMealsPanel } from "@/components/fnb/staff-meals-panel";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { useSyncScreenWithHeader } from "@/lib/date/use-sync-screen-with-header";
 
 /** API_REQUIRED: F&B module — connect via lib/api/endpoints.ts (fnb.*) */
 export default function FnBPage() {
+  const { rangeQuery } = useGlobalDateFilter();
   const [selectedDate, setSelectedDate] = useState("today");
   const [selectedOutlet, setSelectedOutlet] = useState("all");
-  const fnbFilters = {
-    date: selectedDate,
-    outlet: selectedOutlet,
-  };
+
+  useSyncScreenWithHeader(setSelectedDate);
+  const fnbFilters = useMemo(
+    () => ({
+      date: selectedDate,
+      outlet: selectedOutlet,
+      ...(selectedDate === "header" ? { headerRange: rangeQuery } : {}),
+    }),
+    [selectedDate, selectedOutlet, rangeQuery]
+  );
 
   return (
     <DashboardShell

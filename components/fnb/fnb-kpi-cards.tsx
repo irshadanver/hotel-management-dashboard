@@ -10,6 +10,7 @@ import {
 import { KPICard, KPICardsGrid } from "@/components/shared";
 import { DrillDownCard } from "@/components/shared/drill-down-card";
 import { FNB_KPI_ROUTES } from "@/lib/drill-down/routes";
+import { withDrillDateContext } from "@/lib/drill-down/query-params";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { useFnBKPIs } from "@/lib/api/hooks/use-fnb";
 import type { FnBFilters } from "@/lib/api/mock/fnb";
@@ -54,7 +55,16 @@ export function FnBKPICards({ filters }: FnBKPICardsProps) {
   return (
     <KPICardsGrid columns={5}>
       {kpis.map((kpi) => {
-        const href = FNB_KPI_ROUTES[kpi.title];
+        const baseHref = FNB_KPI_ROUTES[kpi.title];
+        const href = baseHref
+          ? withDrillDateContext(baseHref, "fnb", {
+              fnbDate: filters?.date,
+              fnbOutlet: filters?.outlet,
+              ...(filters?.date === "header" && filters?.headerRange
+                ? { rangeQuery: filters.headerRange }
+                : {}),
+            })
+          : undefined;
         const visual = kpiVisuals[kpi.title as keyof typeof kpiVisuals];
         const card = (
           <KPICard

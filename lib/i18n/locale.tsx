@@ -99,6 +99,7 @@ const arabicText: Record<string, string> = {
   "Failed to load revenue KPIs": "تعذر تحميل مؤشرات الإيرادات",
 
   "Select date": "اختر التاريخ",
+  "Use Header Date": "استخدام تاريخ الترويسة",
   "Room type": "نوع الغرفة",
   "All Room Types": "كل أنواع الغرف",
   Today: "اليوم",
@@ -487,6 +488,8 @@ const labels = {
     dateFrom: "From",
     dateTo: "To",
     applyDateRange: "Apply",
+    dateSelectionReadOnlyHint:
+      "Date range is fixed on this page. Open Dashboard, Rooms, Revenue, F&B, Inventory, Finance, or Alerts to change it.",
     displayDate: "May 14, 2026",
     profileSettings: "Profile Settings",
     preferences: "Preferences",
@@ -522,6 +525,8 @@ const labels = {
     dateFrom: "من",
     dateTo: "إلى",
     applyDateRange: "تطبيق",
+    dateSelectionReadOnlyHint:
+      "النطاق الزمني ثابت في هذه الصفحة. افتح لوحة التحكم أو الغرف أو الإيرادات أو الأطعمة والمشروبات أو المخزون أو المالية أو التنبيهات لتغييره.",
     displayDate: "14 مايو 2026",
     profileSettings: "إعدادات الملف الشخصي",
     preferences: "التفضيلات",

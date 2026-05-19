@@ -34,6 +34,11 @@ interface GlobalDateFilterContextValue {
   rangeQuery: DateRangeQuery;
   /** Stable key for effect deps when range changes */
   rangeQueryKey: string;
+  /**
+   * Increments whenever the user commits a header date choice from the header
+   * UI (preset or custom Apply), including re-selecting the same preset/range.
+   */
+  rangeQueryRevision: number;
   /** Short label for the header trigger (locale-aware) */
   triggerLabel: string;
 }
@@ -68,10 +73,12 @@ export function GlobalDateFilterProvider({ children }: { children: ReactNode }) 
   );
   const [customStartDate, setCustomStartDateState] = useState(def.start);
   const [customEndDate, setCustomEndDateState] = useState(def.end);
+  const [rangeQueryRevision, setRangeQueryRevision] = useState(0);
   const { locale, isRTL, t } = useLocale();
 
   const setPreset = useCallback((next: DateRangePreset) => {
     setPresetState(next);
+    setRangeQueryRevision((r) => r + 1);
   }, []);
 
   const setCustomStartDate = useCallback((iso: string) => {
@@ -86,6 +93,7 @@ export function GlobalDateFilterProvider({ children }: { children: ReactNode }) 
     setCustomStartDateState(startISO);
     setCustomEndDateState(endISO);
     setPresetState("custom");
+    setRangeQueryRevision((r) => r + 1);
   }, []);
 
   const rangeQuery = useMemo(
@@ -141,6 +149,7 @@ export function GlobalDateFilterProvider({ children }: { children: ReactNode }) 
       applyCustomDateRange,
       rangeQuery,
       rangeQueryKey,
+      rangeQueryRevision,
       triggerLabel,
     }),
     [
@@ -153,6 +162,7 @@ export function GlobalDateFilterProvider({ children }: { children: ReactNode }) 
       applyCustomDateRange,
       rangeQuery,
       rangeQueryKey,
+      rangeQueryRevision,
       triggerLabel,
     ]
   );

@@ -10,6 +10,7 @@ import {
 } from "@/components/shared";
 
 const fnbDateOptions: FilterOption[] = [
+  { value: "header", label: "Use Header Date" },
   { value: "today", label: "Today" },
   { value: "yesterday", label: "Yesterday" },
   { value: "last7", label: "Last 7 Days" },
@@ -36,6 +37,7 @@ export function FnBFilters({
         value={selectedDate}
         onChange={onDateChange}
         options={fnbDateOptions}
+        className="min-w-[200px] sm:min-w-[220px]"
       />
       <SelectFilter
         value={selectedOutlet}

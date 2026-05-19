@@ -9,10 +9,15 @@ import {
   fetchVIPGuests,
 } from "../services/rooms";
 import type { RoomFilters } from "../mock/rooms";
+import { dateRangeQueryKey } from "@/lib/date/date-range-query";
 import { useApiQuery } from "./use-api-query";
 
 function roomFilterDeps(filters?: RoomFilters) {
-  return [filters?.date ?? "today", filters?.roomType ?? "all"];
+  const headerKey =
+    filters?.date === "header" && filters?.headerRange
+      ? dateRangeQueryKey(filters.headerRange)
+      : "";
+  return [filters?.date ?? "today", filters?.roomType ?? "all", headerKey];
 }
 
 export function useRoomsKPIs(filters?: RoomFilters) {

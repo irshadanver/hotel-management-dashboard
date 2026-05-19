@@ -10,9 +10,14 @@ import {
   fetchTopAccounts,
 } from "../services/revenue";
 import { useApiQuery } from "./use-api-query";
+import { dateRangeQueryKey } from "@/lib/date/date-range-query";
 
 function revenueFilterDeps(filters?: RevenueFilters) {
-  return [filters?.range ?? "30d", filters?.segment ?? "all"];
+  const headerKey =
+    filters?.range === "header" && filters?.headerRange
+      ? dateRangeQueryKey(filters.headerRange)
+      : "";
+  return [filters?.range ?? "30d", filters?.segment ?? "all", headerKey];
 }
 
 export function useRevenueKPIs(filters?: RevenueFilters) {

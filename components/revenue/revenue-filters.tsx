@@ -10,6 +10,7 @@ import {
 } from "@/components/shared";
 
 const forecastRangeOptions: FilterOption[] = [
+  { value: "header", label: "Use Header Date" },
   { value: "7d", label: "Next 7 Days" },
   { value: "14d", label: "Next 14 Days" },
   { value: "30d", label: "Next 30 Days" },
@@ -35,6 +36,7 @@ export function RevenueFilters({
         value={selectedRange}
         onChange={onRangeChange}
         options={forecastRangeOptions}
+        className="min-w-[200px] sm:min-w-[220px]"
       />
       <SelectFilter
         value={selectedSegment}

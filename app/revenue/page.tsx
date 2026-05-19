@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { RevenueKPICards } from "@/components/revenue/revenue-kpi-cards";
 import { RevenueFilters } from "@/components/revenue/revenue-filters";
@@ -12,20 +12,33 @@ import { TopAccountsTable } from "@/components/revenue/top-accounts-table";
 import { LowDemandTable } from "@/components/revenue/low-demand-table";
 import { drillDownHref } from "@/lib/drill-down/routes";
 import { withDrillDateContext } from "@/lib/drill-down/query-params";
+import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
+import { useSyncScreenWithHeader } from "@/lib/date/use-sync-screen-with-header";
 
 /** API_REQUIRED: Revenue module — connect via lib/api/endpoints.ts (revenue.*) */
 export default function RevenueDashboard() {
+  const { rangeQuery } = useGlobalDateFilter();
   const [selectedRange, setSelectedRange] = useState("30d");
   const [selectedSegment, setSelectedSegment] = useState("all");
-  const revenueFilters = {
-    range: selectedRange,
-    segment: selectedSegment,
-  };
+
+  useSyncScreenWithHeader(setSelectedRange);
+  const revenueFilters = useMemo(
+    () => ({
+      range: selectedRange,
+      segment: selectedSegment,
+      ...(selectedRange === "header" ? { headerRange: rangeQuery } : {}),
+    }),
+    [selectedRange, selectedSegment, rangeQuery]
+  );
 
   const cashPositionDrillHref = withDrillDateContext(
     drillDownHref("finance", "cash-position"),
     "revenue",
-    { revRange: selectedRange, revSegment: selectedSegment }
+    {
+      revRange: selectedRange,
+      revSegment: selectedSegment,
+      ...(selectedRange === "header" ? { rangeQuery } : {}),
+    }
   );
 
   return (

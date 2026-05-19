@@ -1,5 +1,13 @@
 import { formatPercent, type Room, type RoomStatus } from "@/lib/types";
 import type { TimeSeriesDataPoint } from "@/lib/types";
+import type { DateRangePreset } from "@/lib/date/date-range-preset";
+import {
+  buildDateRangeQuery,
+  parseYYYYMMDD,
+  startOfLocalDay,
+  type DateRangeQuery,
+} from "@/lib/date/date-range-query";
+import { mockNumericScale } from "@/lib/date/preset-multipliers";
 
 export interface RoomKPI {
   title: string;
@@ -11,6 +19,8 @@ export interface RoomKPI {
 export interface RoomFilters {
   date?: string;
   roomType?: string;
+  /** When `date` is `"header"`, mirrors the executive header date range. */
+  headerRange?: DateRangeQuery | null;
 }
 
 export interface RoomArrival {
@@ -52,7 +62,89 @@ function normalizeFilters(filters?: RoomFilters) {
   return {
     date: filters?.date ?? "today",
     roomType: filters?.roomType ?? "all",
+    headerRange: filters?.headerRange ?? null,
   };
+}
+
+const VALID_PRESETS: DateRangePreset[] = [
+  "today",
+  "yesterday",
+  "last7Days",
+  "last30Days",
+  "custom",
+];
+
+function coerceDrillPreset(p?: string | null): DateRangePreset {
+  if (p && VALID_PRESETS.includes(p as DateRangePreset)) return p as DateRangePreset;
+  return "today";
+}
+
+/** Rebuild room filters from drill URL (supports `roomsDate=header` + preset/start/end). */
+export function roomFiltersFromDrillUrl(
+  roomsDate?: string | null,
+  roomType?: string | null,
+  preset?: string | null,
+  startDate?: string | null,
+  endDate?: string | null
+): RoomFilters {
+  const rt = roomType ?? "all";
+  const rd = roomsDate ?? "today";
+  if (rd === "header") {
+    const pr = coerceDrillPreset(preset);
+    const headerRange = buildDateRangeQuery(pr, startDate ?? "", endDate ?? "");
+    return { date: "header", roomType: rt, headerRange };
+  }
+  return { date: rd, roomType: rt };
+}
+
+function dayOffsetFromToday(iso: string, now = new Date()): number | null {
+  const d = parseYYYYMMDD(iso);
+  if (!d) return null;
+  const t = startOfLocalDay(now);
+  return Math.round(
+    (startOfLocalDay(d).getTime() - t.getTime()) / 86_400_000
+  );
+}
+
+/**
+ * Maps the header date range to the discrete "day" mock curve used for room
+ * status and arrival/departure templates.
+ */
+export function innerDateFromHeaderRange(
+  q: DateRangeQuery,
+  now = new Date()
+): "yesterday" | "today" | "tomorrow" {
+  if (q.preset === "yesterday") return "yesterday";
+  if (q.preset === "today") return "today";
+  if (q.preset === "last7Days" || q.preset === "last30Days") return "today";
+  if (q.preset === "custom" && q.daySpan === 1 && q.startDate === q.endDate) {
+    const off = dayOffsetFromToday(q.startDate, now);
+    if (off === -1) return "yesterday";
+    if (off === 0) return "today";
+    if (off === 1) return "tomorrow";
+  }
+  return "today";
+}
+
+function resolveRoomsEffectiveDate(
+  date: string,
+  headerRange: DateRangeQuery | null | undefined,
+  now = new Date()
+): "yesterday" | "today" | "tomorrow" {
+  if (date === "header") {
+    if (!headerRange) return "today";
+    return innerDateFromHeaderRange(headerRange, now);
+  }
+  if (date === "yesterday" || date === "today" || date === "tomorrow") {
+    return date;
+  }
+  return "today";
+}
+
+function scaleRowsByHeaderRange<T>(rows: T[], q: DateRangeQuery): T[] {
+  const m = mockNumericScale(q);
+  const len = Math.max(3, Math.min(50, Math.round(rows.length * m)));
+  return rows.slice(0, len);
 }
 
 function roomTypeMatches(roomType: string, selectedRoomType: string) {
@@ -123,14 +215,15 @@ function statusForRoom(date: string, room: Room, typeIndex: number): RoomStatus 
 }
 
 export function getFilteredRooms(filters?: RoomFilters): Room[] {
-  const { date, roomType } = normalizeFilters(filters);
+  const { date, roomType, headerRange } = normalizeFilters(filters);
+  const eff = resolveRoomsEffectiveDate(date, headerRange);
   const typeCounters: Record<string, number> = {};
 
   return mockRooms
     .map((room) => {
       const typeIndex = typeCounters[room.type] ?? 0;
       typeCounters[room.type] = typeIndex + 1;
-      const status = statusForRoom(date, room, typeIndex);
+      const status = statusForRoom(eff, room, typeIndex);
 
       return {
         ...room,
@@ -179,8 +272,13 @@ function buildRoomArrivals(date: string): RoomArrival[] {
 export const mockRoomArrivals: RoomArrival[] = buildRoomArrivals("today");
 
 export function getFilteredRoomArrivals(filters?: RoomFilters): RoomArrival[] {
-  const { date, roomType } = normalizeFilters(filters);
-  return filterByRoomType(buildRoomArrivals(date), roomType);
+  const { date, roomType, headerRange } = normalizeFilters(filters);
+  const eff = resolveRoomsEffectiveDate(date, headerRange);
+  let rows = buildRoomArrivals(eff);
+  if (date === "header" && headerRange) {
+    rows = scaleRowsByHeaderRange(rows, headerRange);
+  }
+  return filterByRoomType(rows, roomType);
 }
 
 function buildRoomDepartures(date: string): RoomDeparture[] {
@@ -219,8 +317,13 @@ function buildRoomDepartures(date: string): RoomDeparture[] {
 export const mockRoomDepartures: RoomDeparture[] = buildRoomDepartures("today");
 
 export function getFilteredRoomDepartures(filters?: RoomFilters): RoomDeparture[] {
-  const { date, roomType } = normalizeFilters(filters);
-  return filterByRoomType(buildRoomDepartures(date), roomType);
+  const { date, roomType, headerRange } = normalizeFilters(filters);
+  const eff = resolveRoomsEffectiveDate(date, headerRange);
+  let rows = buildRoomDepartures(eff);
+  if (date === "header" && headerRange) {
+    rows = scaleRowsByHeaderRange(rows, headerRange);
+  }
+  return filterByRoomType(rows, roomType);
 }
 
 export const mockVIPGuests: VIPGuest[] = [
@@ -281,19 +384,30 @@ export const mockRoomsOccupancyForecast14: TimeSeriesDataPoint[] = [
 export const mockRoomsOccupancyTrend = mockRoomsOccupancyForecast14;
 
 export function getFilteredRoomsOccupancyTrend(filters?: RoomFilters) {
-  const { date, roomType } = normalizeFilters(filters);
+  const { date, roomType, headerRange } = normalizeFilters(filters);
+  const eff = resolveRoomsEffectiveDate(date, headerRange);
   const typeFactor =
     roomType === "all"
       ? 0
       : { standard: -4, deluxe: 1, suite: 3, executive: 5 }[roomType] ?? 0;
-  const dateFactor = { yesterday: -3, today: 0, tomorrow: 2 }[date] ?? 0;
+  const dateFactor = { yesterday: -3, today: 0, tomorrow: 2 }[eff] ?? 0;
+  const headerAdj =
+    date === "header" && headerRange
+      ? Math.round((mockNumericScale(headerRange) - 1) * 15)
+      : 0;
 
   const clampPct = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
   return mockRoomsOccupancyForecast14.map((point) => {
-    const f = clampPct(Number(point.forecast) + typeFactor + dateFactor);
+    const f = clampPct(
+      Number(point.forecast) + typeFactor + dateFactor + headerAdj
+    );
     const c = clampPct(
-      Number(point.confirmed) + typeFactor + dateFactor - (date === "tomorrow" ? -1 : 0)
+      Number(point.confirmed) +
+        typeFactor +
+        dateFactor +
+        headerAdj -
+        (eff === "tomorrow" ? -1 : 0)
     );
     return {
       ...point,
@@ -305,11 +419,12 @@ export function getFilteredRoomsOccupancyTrend(filters?: RoomFilters) {
 }
 
 export function getFilteredRoomsKPIs(filters?: RoomFilters): RoomKPI[] {
-  const { date, roomType } = normalizeFilters(filters);
-  const rooms = getFilteredRooms({ date, roomType });
-  const arrivals = getFilteredRoomArrivals({ date, roomType });
-  const departures = getFilteredRoomDepartures({ date, roomType });
-  const occupancyTrend = getFilteredRoomsOccupancyTrend({ date, roomType });
+  const { date, roomType, headerRange } = normalizeFilters(filters);
+  const eff = resolveRoomsEffectiveDate(date, headerRange);
+  const rooms = getFilteredRooms(filters);
+  const arrivals = getFilteredRoomArrivals(filters);
+  const departures = getFilteredRoomDepartures(filters);
+  const occupancyTrend = getFilteredRoomsOccupancyTrend(filters);
   const availableRooms = rooms.filter((room) => room.status === "vacant-clean").length;
   const soldRooms = rooms.filter(
     (room) => room.status === "occupied" || room.status === "reserved"
@@ -323,7 +438,10 @@ export function getFilteredRoomsKPIs(filters?: RoomFilters): RoomKPI[] {
   const checkedOutDepartures = departures.filter(
     (departure) => departure.status === "checked-out"
   ).length;
-  const dateLabel = dateLabels[date] ?? "Selected date";
+  const dateLabel =
+    date === "header" && headerRange
+      ? `${headerRange.startDate} – ${headerRange.endDate}`
+      : (dateLabels[eff] ?? "Selected date");
 
   return [
     {
@@ -358,7 +476,7 @@ export function getFilteredRoomsKPIs(filters?: RoomFilters): RoomKPI[] {
     },
     {
       title: "No-Shows",
-      value: date === "tomorrow" ? 0 : roomType === "all" ? 2 : 1,
+      value: eff === "tomorrow" ? 0 : roomType === "all" ? 2 : 1,
       subtitle: dateLabel,
       color: "oklch(0.55 0.2 25)",
     },

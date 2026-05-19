@@ -85,6 +85,9 @@ export function RoomsKPICards({ filters }: RoomsKPICardsProps) {
           ? withDrillDateContext(baseHref, "rooms", {
               roomsDate: filters?.date,
               roomType: filters?.roomType,
+              ...(filters?.date === "header" && filters?.headerRange
+                ? { rangeQuery: filters.headerRange }
+                : {}),
             })
           : undefined;
         const card = (

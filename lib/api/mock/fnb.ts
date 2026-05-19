@@ -1,8 +1,15 @@
 import { formatSAR } from "@/lib/types";
+import type { DateRangePreset } from "@/lib/date/date-range-preset";
+import {
+  buildDateRangeQuery,
+  type DateRangeQuery,
+} from "@/lib/date/date-range-query";
 
 export interface FnBFilters {
   date?: string;
   outlet?: string;
+  /** When `date` is `"header"`, mirrors the executive header date range. */
+  headerRange?: DateRangeQuery | null;
 }
 
 export interface FnBKPI {
@@ -86,23 +93,54 @@ function normalizeFilters(filters?: FnBFilters) {
   return {
     date: filters?.date ?? "today",
     outlet: filters?.outlet ?? "all",
+    headerRange: filters?.headerRange ?? null,
   };
 }
 
-function dateScale(date: string) {
-  return dateMultipliers[date] ?? dateMultipliers.today;
+type NormalizedFnBFilters = ReturnType<typeof normalizeFilters>;
+
+/** Map header day span to the same scale curve as discrete F&B date presets. */
+function headerSpanScale(q: DateRangeQuery): number {
+  const span = Math.max(1, Math.min(90, q.daySpan));
+  if (span <= 1) {
+    return q.preset === "yesterday" ? dateMultipliers.yesterday : dateMultipliers.today;
+  }
+  if (span <= 7) {
+    return (
+      dateMultipliers.today +
+      ((dateMultipliers.last7 - dateMultipliers.today) * (span - 1)) / 6
+    );
+  }
+  if (span <= 30) {
+    return (
+      dateMultipliers.last7 +
+      ((dateMultipliers.last30 - dateMultipliers.last7) * (span - 7)) / 23
+    );
+  }
+  return Math.min(
+    45,
+    dateMultipliers.last30 +
+      ((41 - dateMultipliers.last30) * (span - 30)) / 60
+  );
+}
+
+function dateScaleFromFilters(n: NormalizedFnBFilters): number {
+  if (n.date === "header" && n.headerRange) {
+    return headerSpanScale(n.headerRange);
+  }
+  return dateMultipliers[n.date] ?? dateMultipliers.today;
 }
 
 function outletMatches(outletId: string, selectedOutlet: string) {
   return selectedOutlet === "all" || outletId === selectedOutlet;
 }
 
-function scaleAmount(value: number, date: string) {
-  return Math.round(value * dateScale(date));
+function scaleAmount(value: number, n: NormalizedFnBFilters) {
+  return Math.round(value * dateScaleFromFilters(n));
 }
 
-function scaleCount(value: number, date: string) {
-  return Math.max(0, Math.round(value * dateScale(date)));
+function scaleCount(value: number, n: NormalizedFnBFilters) {
+  return Math.max(0, Math.round(value * dateScaleFromFilters(n)));
 }
 
 const baseOutletSales: OutletSalesRow[] = [
@@ -153,22 +191,25 @@ const baseMealEntries: MealEntryRow[] = [
 ];
 
 function filteredOutletRows(filters?: FnBFilters) {
-  const { date, outlet } = normalizeFilters(filters);
+  const n = normalizeFilters(filters);
   return baseOutletSales
-    .filter((row) => outletMatches(row.outletId, outlet))
-    .map((row) => ({ ...row, sales: scaleAmount(row.sales, date) }));
+    .filter((row) => outletMatches(row.outletId, n.outlet))
+    .map((row) => ({ ...row, sales: scaleAmount(row.sales, n) }));
 }
 
 export function getFilteredFnBKPIs(filters?: FnBFilters): FnBKPI[] {
-  const { date, outlet } = normalizeFilters(filters);
+  const n = normalizeFilters(filters);
   const salesRows = filteredOutletRows(filters);
   const topItems = getFilteredTopItems(filters);
   const slowItems = getFilteredSlowItems(filters);
   const totalSales = salesRows.reduce((sum, row) => sum + row.sales, 0);
-  const covers = Math.max(1, scaleCount(outlet === "all" ? 284 : 62, date));
+  const covers = Math.max(1, scaleCount(n.outlet === "all" ? 284 : 62, n));
   const discounts = Math.round(totalSales * 0.067);
   const voids = Math.round(totalSales * 0.017);
-  const label = dateLabels[date] ?? "Selected date";
+  const label =
+    n.date === "header" && n.headerRange
+      ? `${n.headerRange.startDate} – ${n.headerRange.endDate}`
+      : (dateLabels[n.date] ?? "Selected date");
 
   return [
     { title: "Today's Sales", value: formatSAR(totalSales), subtitle: label, trend: { value: "+8.2%", positive: true } },
@@ -179,13 +220,65 @@ export function getFilteredFnBKPIs(filters?: FnBFilters): FnBKPI[] {
   ];
 }
 
+const VALID_FN_PRESETS: DateRangePreset[] = [
+  "today",
+  "yesterday",
+  "last7Days",
+  "last30Days",
+  "custom",
+];
+
+function coerceFnBDrillPreset(p?: string | null): DateRangePreset {
+  if (p && VALID_FN_PRESETS.includes(p as DateRangePreset)) return p as DateRangePreset;
+  return "today";
+}
+
+/** Rebuild F&B filters from drill URL (`fnbDate=header` + preset/start/end). */
+export function fnbFiltersFromDrillUrl(
+  fnbDate?: string | null,
+  fnbOutlet?: string | null,
+  preset?: string | null,
+  startDate?: string | null,
+  endDate?: string | null
+): FnBFilters {
+  const outlet = fnbOutlet ?? "all";
+  const date = fnbDate ?? "today";
+  if (date === "header") {
+    const headerRange = buildDateRangeQuery(
+      coerceFnBDrillPreset(preset),
+      startDate ?? "",
+      endDate ?? ""
+    );
+    return { date: "header", outlet, headerRange };
+  }
+  return { date, outlet };
+}
+
+/** Numeric discounts total for KPI "Discounts" (same formula as the card). */
+export function getFnBDiscountsNumber(filters?: FnBFilters): number {
+  const totalSales = filteredOutletRows(filters).reduce(
+    (sum, row) => sum + row.sales,
+    0
+  );
+  return Math.round(totalSales * 0.067);
+}
+
+/** Numeric voids total for KPI "Voids" (same formula as the card). */
+export function getFnBVoidsNumber(filters?: FnBFilters): number {
+  const totalSales = filteredOutletRows(filters).reduce(
+    (sum, row) => sum + row.sales,
+    0
+  );
+  return Math.round(totalSales * 0.017);
+}
+
 export function getFilteredOutletSales(filters?: FnBFilters) {
   return filteredOutletRows(filters);
 }
 
 export function getFilteredMealPeriods(filters?: FnBFilters): MealPeriodRow[] {
-  const { date, outlet } = normalizeFilters(filters);
-  const scale = dateScale(date) * (outlet === "all" ? 1 : 0.32);
+  const n = normalizeFilters(filters);
+  const scale = dateScaleFromFilters(n) * (n.outlet === "all" ? 1 : 0.32);
   const rows = [
     { period: "6 AM", breakfast: 450, lunch: 0, dinner: 0 },
     { period: "7 AM", breakfast: 1200, lunch: 0, dinner: 0 },
@@ -213,13 +306,13 @@ export function getFilteredMealPeriods(filters?: FnBFilters): MealPeriodRow[] {
 }
 
 export function getFilteredTopItems(filters?: FnBFilters) {
-  const { date, outlet } = normalizeFilters(filters);
+  const n = normalizeFilters(filters);
   return baseTopItems
-    .filter((item) => outletMatches(item.outletId, outlet))
+    .filter((item) => outletMatches(item.outletId, n.outlet))
     .map((item) => ({
       ...item,
-      quantity: scaleCount(item.quantity, date),
-      revenue: scaleAmount(item.revenue, date),
+      quantity: scaleCount(item.quantity, n),
+      revenue: scaleAmount(item.revenue, n),
     }))
     .sort((a, b) => b.revenue - a.revenue);
 }
@@ -230,15 +323,15 @@ export function getFilteredSlowItems(filters?: FnBFilters) {
 }
 
 export function getFilteredOpenChecks(filters?: FnBFilters) {
-  const { date, outlet } = normalizeFilters(filters);
+  const n = normalizeFilters(filters);
   return baseOpenChecks
-    .filter((check) => outletMatches(check.outletId, outlet))
-    .map((check) => ({ ...check, amount: scaleAmount(check.amount, date) }));
+    .filter((check) => outletMatches(check.outletId, n.outlet))
+    .map((check) => ({ ...check, amount: scaleAmount(check.amount, n) }));
 }
 
 export function getFilteredMealEntries(filters?: FnBFilters) {
-  const { date, outlet } = normalizeFilters(filters);
+  const n = normalizeFilters(filters);
   return baseMealEntries
-    .filter((entry) => outletMatches(entry.outletId, outlet))
-    .map((entry) => ({ ...entry, amount: scaleAmount(entry.amount, date) }));
+    .filter((entry) => outletMatches(entry.outletId, n.outlet))
+    .map((entry) => ({ ...entry, amount: scaleAmount(entry.amount, n) }));
 }

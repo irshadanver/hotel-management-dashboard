@@ -1,8 +1,11 @@
 import { formatPercent, formatSAR, type TimeSeriesDataPoint } from "@/lib/types";
+import type { DateRangeQuery } from "@/lib/date/date-range-query";
 
 export interface RevenueFilters {
   range?: string;
   segment?: string;
+  /** When `range` is `"header"`, mirrors the executive header date range. */
+  headerRange?: DateRangeQuery | null;
 }
 
 export interface RevenueKPI {
@@ -72,15 +75,24 @@ function normalizeFilters(filters?: RevenueFilters) {
   return {
     range: filters?.range ?? "30d",
     segment: filters?.segment ?? "all",
+    headerRange: filters?.headerRange ?? null,
   };
 }
 
-function getDays(range: string) {
-  return rangeDays[range] ?? rangeDays["30d"];
+type NormalizedRevenueFilters = ReturnType<typeof normalizeFilters>;
+
+function getDayCount(n: NormalizedRevenueFilters): number {
+  if (n.range === "header" && n.headerRange) {
+    return Math.min(90, Math.max(1, n.headerRange.daySpan));
+  }
+  if (n.range === "header") {
+    return rangeDays["30d"];
+  }
+  return rangeDays[n.range] ?? rangeDays["30d"];
 }
 
-function rangeScale(range: string) {
-  return getDays(range) / 30;
+function rangeScale(n: NormalizedRevenueFilters) {
+  return getDayCount(n) / 30;
 }
 
 function segmentScale(segment: string) {
@@ -98,33 +110,38 @@ function formatCompactSAR(value: number) {
 }
 
 export function getFilteredRevenueKPIs(filters?: RevenueFilters): RevenueKPI[] {
-  const { range, segment } = normalizeFilters(filters);
-  const days = getDays(range);
-  const scale = rangeScale(range) * segmentScale(segment);
+  const n = normalizeFilters(filters);
+  const { segment, range, headerRange } = n;
+  const days = getDayCount(n);
+  const scale = rangeScale(n) * segmentScale(segment);
   const occupancy = Math.min(95, 84.3 + (segment === "group" ? -7 : segment === "corporate" ? 3 : 0));
   const adr = Math.round(485 * (segment === "corporate" ? 1.08 : segment === "ota" ? 0.94 : 1));
   const roomRevenue = 2400000 * scale;
   const pickup = Math.round(342 * scale);
   const pickupToday = Math.max(4, Math.round(58 * segmentScale(segment)));
   const segmentLabel = segmentLabels[segment] ?? "Selected segment";
+  const rangeLabel =
+    range === "header" && headerRange
+      ? `${headerRange.startDate} – ${headerRange.endDate}`
+      : `${days} days`;
 
   return [
     {
       title: "Occupancy Forecast",
       value: formatPercent(occupancy),
-      subtitle: `${days} days · ${segmentLabel}`,
+      subtitle: `${rangeLabel} · ${segmentLabel}`,
       trend: { value: "2.3%", positive: true },
     },
     {
       title: "ADR Forecast",
       value: formatSAR(adr),
-      subtitle: `${days} days · ${segmentLabel}`,
+      subtitle: `${rangeLabel} · ${segmentLabel}`,
       trend: { value: "3.1%", positive: true },
     },
     {
       title: "Room Revenue Forecast",
       value: formatCompactSAR(roomRevenue),
-      subtitle: `${days} days · ${segmentLabel}`,
+      subtitle: `${rangeLabel} · ${segmentLabel}`,
       trend: { value: "5.8%", positive: true },
     },
     {
@@ -142,10 +159,28 @@ export function getFilteredRevenueKPIs(filters?: RevenueFilters): RevenueKPI[] {
   ];
 }
 
+/** Numeric total for Room Revenue Forecast KPI (same formula as the card). */
+export function getRoomRevenueForecastNumber(filters?: RevenueFilters): number {
+  const n = normalizeFilters(filters);
+  return 2_400_000 * rangeScale(n) * segmentScale(n.segment);
+}
+
+/** Room-night pickup total for KPI "Pickup (Last 7 Days)" (same formula as the card). */
+export function getRevenuePickupLast7DaysNumber(filters?: RevenueFilters): number {
+  const n = normalizeFilters(filters);
+  return Math.round(342 * rangeScale(n) * segmentScale(n.segment));
+}
+
+/** Room-night pickup for KPI "Pickup (Today)" (same formula as the card). */
+export function getRevenuePickupTodayNumber(filters?: RevenueFilters): number {
+  const n = normalizeFilters(filters);
+  return Math.max(4, Math.round(58 * segmentScale(n.segment)));
+}
+
 export function getFilteredBookingPace(filters?: RevenueFilters): TimeSeriesDataPoint[] {
-  const { range, segment } = normalizeFilters(filters);
-  const days = Math.min(getDays(range), 30);
-  const scale = segmentScale(segment);
+  const n = normalizeFilters(filters);
+  const days = Math.min(getDayCount(n), 30);
+  const scale = segmentScale(n.segment);
 
   return Array.from({ length: days }, (_, index) => {
     const day = index + 1;
@@ -166,8 +201,9 @@ const baseSegmentRevenue: SegmentRevenueRow[] = [
 ];
 
 export function getFilteredSegmentRevenue(filters?: RevenueFilters) {
-  const { range, segment } = normalizeFilters(filters);
-  const scale = rangeScale(range);
+  const n = normalizeFilters(filters);
+  const { segment } = n;
+  const scale = rangeScale(n);
   const rows = segment === "all"
     ? baseSegmentRevenue
     : baseSegmentRevenue.filter((row) => row.segment.toLowerCase() === segment);
@@ -209,8 +245,9 @@ const baseTopAccounts: TopAccountRow[] = [
 ];
 
 export function getFilteredTopAccounts(filters?: RevenueFilters) {
-  const { range, segment } = normalizeFilters(filters);
-  const scale = rangeScale(range);
+  const n = normalizeFilters(filters);
+  const { segment } = n;
+  const scale = rangeScale(n);
 
   return filterSegment(baseTopAccounts, segment).map((account) => ({
     ...account,
@@ -229,8 +266,9 @@ const baseLowDemand: LowDemandRow[] = [
 ];
 
 export function getFilteredLowDemand(filters?: RevenueFilters) {
-  const { range, segment } = normalizeFilters(filters);
-  const dayLimit = getDays(range);
+  const n = normalizeFilters(filters);
+  const { segment } = n;
+  const dayLimit = getDayCount(n);
   return filterSegment(baseLowDemand, segment).slice(0, Math.max(1, Math.ceil(dayLimit / 15)));
 }
 
@@ -241,35 +279,35 @@ export function getRevenueDrillAdrDisplay(filters?: RevenueFilters): string {
 }
 
 export function getRevenueDrillRevparDisplay(filters?: RevenueFilters): string {
-  const { range, segment } = normalizeFilters(filters);
+  const n = normalizeFilters(filters);
   const mult =
-    rangeScale(range) * (0.82 + 0.35 * segmentScale(segment));
+    rangeScale(n) * (0.82 + 0.35 * segmentScale(n.segment));
   return formatSAR(Math.round(380 * mult));
 }
 
 export function getRevenueDrillTodayRevenueDisplay(
   filters?: RevenueFilters
 ): string {
-  const { range, segment } = normalizeFilters(filters);
+  const n = normalizeFilters(filters);
   const mult =
-    rangeScale(range) * (0.55 + 0.9 * segmentScale(segment));
+    rangeScale(n) * (0.55 + 0.9 * segmentScale(n.segment));
   return formatSAR(Math.round(127_450 * mult));
 }
 
 export function getRevenueDrillMtdRevenueDisplay(
   filters?: RevenueFilters
 ): string {
-  const { range, segment } = normalizeFilters(filters);
+  const n = normalizeFilters(filters);
   const mult =
-    rangeScale(range) * (0.55 + 0.9 * segmentScale(segment));
+    rangeScale(n) * (0.55 + 0.9 * segmentScale(n.segment));
   return formatSAR(Math.round(1_856_200 * mult));
 }
 
 export function getRevenueDrillCashPositionDisplay(
   filters?: RevenueFilters
 ): string {
-  const { range, segment } = normalizeFilters(filters);
+  const n = normalizeFilters(filters);
   const mult =
-    rangeScale(range) * (0.72 + 0.56 * segmentScale(segment));
+    rangeScale(n) * (0.72 + 0.56 * segmentScale(n.segment));
   return formatSAR(Math.round(892_340 * mult));
 }

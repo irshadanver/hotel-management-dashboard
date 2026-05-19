@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Room, RoomStatus } from "@/lib/types";
 import { useRoomStatus } from "@/lib/api/hooks/use-rooms";
+import type { RoomFilters } from "@/lib/api/mock/rooms";
 import { DataError, DataLoading } from "@/components/shared/data-loading";
 import { DetailDrawer } from "@/components/detail/detail-drawer";
 import { RoomDetailPanel } from "@/components/detail/room-detail-panel";
@@ -54,26 +55,31 @@ const statusConfig: Record<
 };
 
 interface RoomStatusGridProps {
-  selectedDate: string;
-  selectedRoomType: string;
+  filters: RoomFilters;
   statusFilter?: string | null;
   highlightRoom?: string | null;
 }
 
 export function RoomStatusGrid({
-  selectedDate,
-  selectedRoomType,
+  filters,
   statusFilter,
   highlightRoom,
 }: RoomStatusGridProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { tr } = useLocale();
-  const { data: rooms, loading, error } = useRoomStatus({
-    date: selectedDate,
-    roomType: selectedRoomType,
-  });
+  const { data: rooms, loading, error } = useRoomStatus(filters);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const pushRoomsSearch = (mutate: (sp: URLSearchParams) => void) => {
+    const sp = new URLSearchParams(searchParams.toString());
+    mutate(sp);
+    const scrollY = window.scrollY;
+    const q = sp.toString();
+    router.push(q ? `/rooms?${q}` : "/rooms", { scroll: false });
+    window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
+  };
 
   useEffect(() => {
     if (!highlightRoom || !rooms) return;
@@ -103,11 +109,12 @@ export function RoomStatusGrid({
     );
   }
 
+  const roomType = filters.roomType ?? "all";
   const typeFilteredRooms =
-    selectedRoomType === "all"
+    roomType === "all"
       ? rooms
       : rooms.filter(
-          (r) => r.type.toLowerCase() === selectedRoomType.toLowerCase()
+          (r) => r.type.toLowerCase() === roomType.toLowerCase()
         );
 
   let filteredRooms = typeFilteredRooms;
@@ -152,19 +159,32 @@ export function RoomStatusGrid({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  pushRoomsSearch((sp) => {
+                    sp.delete("status");
+                  })
+                }
+                className={cn(
+                  "flex items-center gap-2 rounded-full border px-2 py-1 text-xs transition-colors hover:bg-muted",
+                  !statusFilter && "border-primary bg-primary/5 font-medium"
+                )}
+              >
+                {tr("All")} ({typeFilteredRooms.length})
+              </button>
               {(Object.keys(statusConfig) as RoomStatus[]).map((status) => (
                 <button
                   key={status}
                   type="button"
                   onClick={() => {
-                    const scrollY = window.scrollY;
-                    router.push(
-                      statusFilter === status
-                        ? "/rooms"
-                        : `/rooms?status=${status}`,
-                      { scroll: false }
-                    );
-                    window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                    pushRoomsSearch((sp) => {
+                      if (statusFilter === status) {
+                        sp.delete("status");
+                      } else {
+                        sp.set("status", status);
+                      }
+                    });
                   }}
                   className={cn(
                     "flex items-center gap-2 rounded-full border px-2 py-1 transition-colors hover:bg-muted",

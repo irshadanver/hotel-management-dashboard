@@ -31,11 +31,12 @@ export function RoomsFilters({
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <Select value={selectedDate} onValueChange={onDateChange}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="min-w-[180px] sm:w-[200px]">
               <Calendar className="me-2 h-4 w-4 text-muted-foreground" />
               <SelectValue placeholder={tr("Select date")} />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="header">{tr("Use Header Date")}</SelectItem>
               <SelectItem value="today">{tr("Today")}</SelectItem>
               <SelectItem value="tomorrow">{tr("Tomorrow")}</SelectItem>
               <SelectItem value="yesterday">{tr("Yesterday")}</SelectItem>

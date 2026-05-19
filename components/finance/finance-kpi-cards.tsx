@@ -10,6 +10,7 @@ import {
 import { KPICard, KPICardsGrid } from "@/components/shared";
 import { DrillDownCard } from "@/components/shared/drill-down-card";
 import { FINANCE_KPI_ROUTES } from "@/lib/drill-down/routes";
+import { withDrillDateContext } from "@/lib/drill-down/query-params";
 import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
 import { mockNumericScale } from "@/lib/date/preset-multipliers";
 import { formatSAR } from "@/lib/types";
@@ -71,7 +72,10 @@ export function FinanceKPICards() {
   return (
     <KPICardsGrid columns={4}>
       {kpis.map((kpi) => {
-        const href = FINANCE_KPI_ROUTES[kpi.title];
+        const baseHref = FINANCE_KPI_ROUTES[kpi.title];
+        const href = baseHref
+          ? withDrillDateContext(baseHref, "dashboard", { rangeQuery })
+          : undefined;
         const card = <KPICard key={kpi.title} {...kpi} className="h-full" />;
 
         return href ? (
