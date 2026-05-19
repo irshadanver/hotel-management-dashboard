@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { cn } from "@/lib/utils";
-import { getStoredSession } from "@/lib/auth/session";
+import {
+  getStoredSession,
+  touchSessionActivity,
+} from "@/lib/auth/session";
 import { useLocale } from "@/lib/i18n/locale";
 
 export type NavItemId =
@@ -35,19 +43,41 @@ export function DashboardShell({
   headerActions,
 }: DashboardShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [authorized, setAuthorized] = useState(false);
+  /** null = not checked yet (avoid flashing dashboard before redirect). */
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const { isRTL, t, tr } = useLocale();
 
-  useEffect(() => {
-    if (getStoredSession()) {
+  useLayoutEffect(() => {
+    const session = getStoredSession();
+    if (session) {
+      touchSessionActivity();
       setAuthorized(true);
       return;
     }
 
+    setAuthorized(false);
     router.replace(`/login?next=${encodeURIComponent(pathname)}`);
   }, [pathname, router]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && getStoredSession()) {
+        touchSessionActivity();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
+  if (authorized === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        {t.checkingSession}
+      </div>
+    );
+  }
 
   if (!authorized) {
     return (
