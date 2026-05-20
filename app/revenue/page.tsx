@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { RevenueKPICards } from "@/components/revenue/revenue-kpi-cards";
 import { RevenueFilters } from "@/components/revenue/revenue-filters";
@@ -22,6 +22,12 @@ export default function RevenueDashboard() {
   const [selectedSegment, setSelectedSegment] = useState("all");
 
   useSyncScreenWithHeader(setSelectedRange);
+
+  const handleRefreshFilters = useCallback(() => {
+    setSelectedRange("30d");
+    setSelectedSegment("all");
+  }, []);
+
   const revenueFilters = useMemo(
     () => ({
       range: selectedRange,
@@ -52,6 +58,7 @@ export default function RevenueDashboard() {
         onRangeChange={setSelectedRange}
         selectedSegment={selectedSegment}
         onSegmentChange={setSelectedSegment}
+        onRefresh={handleRefreshFilters}
       />
 
       <RevenueKPICards filters={revenueFilters} />

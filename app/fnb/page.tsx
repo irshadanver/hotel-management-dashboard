@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { FnBKPICards } from "@/components/fnb/fnb-kpi-cards";
 import { FnBFilters } from "@/components/fnb/fnb-filters";
@@ -20,6 +20,12 @@ export default function FnBPage() {
   const [selectedOutlet, setSelectedOutlet] = useState("all");
 
   useSyncScreenWithHeader(setSelectedDate);
+
+  const handleRefreshFilters = useCallback(() => {
+    setSelectedDate("today");
+    setSelectedOutlet("all");
+  }, []);
+
   const fnbFilters = useMemo(
     () => ({
       date: selectedDate,
@@ -40,6 +46,7 @@ export default function FnBPage() {
         onDateChange={setSelectedDate}
         selectedOutlet={selectedOutlet}
         onOutletChange={setSelectedOutlet}
+        onRefresh={handleRefreshFilters}
       />
 
       <FnBKPICards filters={fnbFilters} />

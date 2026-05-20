@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { RoomsKPICards } from "@/components/rooms/rooms-kpi-cards";
 import { RoomStatusGrid } from "@/components/rooms/room-status-grid";
@@ -15,6 +15,7 @@ import { useGlobalDateFilter } from "@/lib/date/global-date-filter";
 import { useSyncScreenWithHeader } from "@/lib/date/use-sync-screen-with-header";
 
 function RoomsPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { rangeQuery } = useGlobalDateFilter();
   const statusFilter = searchParams.get("status");
@@ -23,6 +24,12 @@ function RoomsPageContent() {
   const [selectedRoomType, setSelectedRoomType] = useState("all");
 
   useSyncScreenWithHeader(setSelectedDate);
+
+  const handleRefreshFilters = useCallback(() => {
+    setSelectedDate("today");
+    setSelectedRoomType("all");
+    router.replace("/rooms", { scroll: false });
+  }, [router]);
 
   const roomFilters = useMemo(
     () => ({
@@ -44,6 +51,7 @@ function RoomsPageContent() {
         onDateChange={setSelectedDate}
         selectedRoomType={selectedRoomType}
         onRoomTypeChange={setSelectedRoomType}
+        onRefresh={handleRefreshFilters}
       />
 
       <RoomsKPICards filters={roomFilters} />

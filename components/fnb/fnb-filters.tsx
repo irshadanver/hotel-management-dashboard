@@ -23,6 +23,7 @@ interface FnBFiltersProps {
   onDateChange: (date: string) => void;
   selectedOutlet: string;
   onOutletChange: (outlet: string) => void;
+  onRefresh?: () => void;
 }
 
 export function FnBFilters({
@@ -30,9 +31,10 @@ export function FnBFilters({
   onDateChange,
   selectedOutlet,
   onOutletChange,
+  onRefresh,
 }: FnBFiltersProps) {
   return (
-    <FilterBar actions={<RefreshButton />}>
+    <FilterBar actions={<RefreshButton onClick={onRefresh} />}>
       <DateRangeFilter
         value={selectedDate}
         onChange={onDateChange}

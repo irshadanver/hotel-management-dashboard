@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -8,7 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, RefreshCw } from "lucide-react";
+import { RefreshButton } from "@/components/shared/filters";
+import { Calendar } from "lucide-react";
 import { useLocale } from "@/lib/i18n/locale";
 
 interface RoomsFiltersProps {
@@ -16,6 +16,7 @@ interface RoomsFiltersProps {
   onDateChange: (date: string) => void;
   selectedRoomType: string;
   onRoomTypeChange: (type: string) => void;
+  onRefresh?: () => void;
 }
 
 export function RoomsFilters({
@@ -23,6 +24,7 @@ export function RoomsFilters({
   onDateChange,
   selectedRoomType,
   onRoomTypeChange,
+  onRefresh,
 }: RoomsFiltersProps) {
   const { tr } = useLocale();
 
@@ -60,10 +62,7 @@ export function RoomsFilters({
         </div>
       </div>
 
-      <Button variant="outline" size="sm" className="gap-2">
-        <RefreshCw className="h-4 w-4" />
-        {tr("Refresh")}
-      </Button>
+      <RefreshButton onClick={onRefresh} />
     </div>
   );
 }

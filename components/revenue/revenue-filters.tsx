@@ -22,6 +22,7 @@ interface RevenueFiltersProps {
   onRangeChange: (range: string) => void;
   selectedSegment: string;
   onSegmentChange: (segment: string) => void;
+  onRefresh?: () => void;
 }
 
 export function RevenueFilters({
@@ -29,9 +30,10 @@ export function RevenueFilters({
   onRangeChange,
   selectedSegment,
   onSegmentChange,
+  onRefresh,
 }: RevenueFiltersProps) {
   return (
-    <FilterBar actions={<RefreshButton />}>
+    <FilterBar actions={<RefreshButton onClick={onRefresh} />}>
       <DateRangeFilter
         value={selectedRange}
         onChange={onRangeChange}
